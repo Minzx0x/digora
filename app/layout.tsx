@@ -12,9 +12,15 @@ export const metadata: Metadata = {
     "Beli Telegram Stars untuk dirimu atau teman dengan harga terjangkau. Proses otomatis 24 jam, langsung masuk ke akun.",
 };
 
+// maximumScale + userScalable:false ngunci pinch-zoom & double-tap-zoom di
+// HP (Android & iOS) — tanpa ini, browser HP ngizinin orang zoom in/out dan
+// geser-geser layar bebas, jadi kerasa "goyang"/gak stabil kayak web biasa
+// alih-alih kerasa kayak aplikasi.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
