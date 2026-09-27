@@ -1,0 +1,189 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #0b0b0c;
+  overflow-x: clip;
+}
+
+body {
+  font-family: "Hanken Grotesk", system-ui, sans-serif;
+  color: #0b0b0c;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-inner {
+  width: 100%;
+}
+
+.card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 32px;
+  overflow: hidden;
+}
+
+/* nav pill */
+.nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px;
+  border-radius: 999px;
+  background: #f4f4f6;
+}
+
+/* penanda hitam yang bergeser ke menu yang dipilih */
+.nav-ind {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  width: 0;
+  border-radius: 999px;
+  background: #0b0b0c;
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.65, 0, 0.2, 1), width 0.4s cubic-bezier(0.65, 0, 0.2, 1),
+    opacity 0.2s;
+  will-change: transform, width;
+}
+
+.nav-link {
+  position: relative;
+  z-index: 1;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5b5b63;
+  white-space: nowrap;
+  transition: color 0.25s;
+}
+
+.nav-link:hover {
+  color: #0b0b0c;
+}
+
+.nav-link.on,
+.nav-link.on:hover {
+  color: #ffffff;
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid #2540ff;
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
+.btn-dark {
+  margin-left: 4px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  background: #0b0b0c;
+  border-radius: 999px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.btn-dark:hover {
+  background: #2540ff;
+}
+
+.btn-dark:focus-visible {
+  outline: 2px solid #2540ff;
+  outline-offset: 2px;
+}
+
+/* mobile layout */
+.m-card {
+  padding-bottom: 36px;
+}
+
+.m-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 4px;
+}
+
+.m-text {
+  padding: 8px 24px 0;
+}
+
+.m-title {
+  margin: 0;
+  font-size: 44px;
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+
+.m-desc {
+  margin: 20px 0 0;
+  font-size: 16px;
+  line-height: 1.6;
+  font-weight: 500;
+  color: #6f6f78;
+}
+
+.m-stats {
+  padding: 32px 24px 0;
+}
+
+/* menu melayang setelah hero */
+.nav-float {
+  position: fixed;
+  top: 16px;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.nav-float.show {
+  opacity: 1;
+  transform: none;
+}
+
+.nav-float .nav {
+  pointer-events: auto;
+  background: rgba(244, 244, 246, 0.92);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.nav-float:not(.show) .nav {
+  pointer-events: none;
+}
+
+@media (max-width: 1023px) {
+  .nav-float {
+    display: none;
+  }
+}

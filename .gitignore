@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+
+# env & secrets — JANGAN pernah ke-commit
+.env
+.env*.local
+.env.local
+
+# misc
+.vercel
+.DS_Store
+npm-debug.log*
