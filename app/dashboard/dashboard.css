@@ -253,6 +253,19 @@
     pointer-events: none;
 }
 
+/* Di layar HP sempit, gambar koinnya (tinggi ~196px di scale 0.7) hampir
+   setinggi kartu saldo itu sendiri (min-height 190px) — jadi nutupin tombol
+   "Beli Stars" di pojok bawah. Diperkecil & digeser lebih ke pojok biar gak
+   nabrak baris tombolnya lagi. */
+@media (max-width: 560px) {
+    .d-balance-art {
+        right: -28px;
+        top: -20px;
+        transform: scale(0.62);
+        transform-origin: top right;
+    }
+}
+
 .d-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
