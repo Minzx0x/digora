@@ -89,7 +89,7 @@ function Chart({ data }: { data: readonly { l: string; v: number }[] }) {
 
 /* ───────── halaman ───────── */
 
-export default function DashboardView({ data, balanceSlot }: { data: AdminData; balanceSlot: ReactNode }) {
+export default function AdminOverview({ data, balanceSlot }: { data: AdminData; balanceSlot: ReactNode }) {
     const [range, setRange] = useState<"7 hari" | "30 hari">("7 hari");
     const [filter, setFilter] = useState<"all" | AdminStatus>("all");
     const [q, setQ] = useState("");
@@ -214,12 +214,12 @@ export default function DashboardView({ data, balanceSlot }: { data: AdminData; 
                                         <td>
                                             <span className={`d-badge ${o.status}`}>{STATUS_LABEL[o.status]}</span>
                                             {o.status === "fail" && o.failReason && (
-                                                <div className="mute" style={{ fontSize: 12, marginTop: 2 }}>
+                                                <div className="mute d-mute-sm">
                                                     {o.failReason}
                                                 </div>
                                             )}
                                             {o.rscOrderNumber !== null && (
-                                                <div className="mute" style={{ fontSize: 11, marginTop: 2 }}>
+                                                <div className="mute d-mute-xs">
                                                     RSC #{o.rscOrderNumber}
                                                 </div>
                                             )}

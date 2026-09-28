@@ -80,8 +80,8 @@ export async function syncTelegramCostFromRSC(): Promise<RscSyncResult> {
         if (!error) updated++;
     }
 
-    revalidatePath("/admin");
-    revalidatePath("/dashboard");
+    revalidatePath("/admin", "layout");
+    revalidatePath("/dashboard", "layout");
 
     return { error: null, updated, skipped };
 }

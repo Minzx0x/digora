@@ -9,7 +9,7 @@
     min-height: calc(100vh - 24px);
     background: #f4f4f6;
     border-radius: 32px;
-    overflow: hidden;
+    overflow: clip;
 }
 
 /* sidebar */
@@ -318,14 +318,7 @@
     gap: 16px;
 }
 
-/* chart */
-/* Kartu Pendapatan full-width, sejajar sama kartu-kartu lain di sampingnya.
-   Dulu grafiknya dibatasi max-width:760px biar gak melar tinggi di layar
-   lebar — tapi itu nyisain ruang kosong di kanan pas kartunya lebih lebar
-   dari 760px. Sekarang grafiknya beneran ngisi penuh lebar kartu (width:100%,
-   tanpa max-width); yang bikin tingginya tetep wajar di layar lebar adalah
-   viewBox SVG-nya sendiri yang udah landscape (lihat W di komponen Chart,
-   DashboardView.tsx) — jadi rasio tinggi:lebarnya proporsional otomatis. */
+/* chart — mengisi penuh lebar kartu; tinggi proporsional via viewBox SVG */
 .d-chart {
     width: 100%;
     height: auto;
@@ -345,6 +338,9 @@
     padding: 4px;
     border-radius: 999px;
     background: #f4f4f6;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
 }
 
 .d-range button {
@@ -357,6 +353,7 @@
     font-weight: 600;
     color: #6f6f78;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .d-range button.on {
@@ -670,6 +667,17 @@
     margin: 0;
 }
 
+/* konten .d-balance yang harus tampil di atas art layer */
+.d-balance-inner {
+    position: relative;
+    z-index: 1;
+}
+
+/* .d-note dengan jarak atas */
+.d-note-mt {
+    margin-top: 12px;
+}
+
 @media (max-width: 1100px) {
 
     .d-grid-top,
@@ -828,15 +836,7 @@
     }
 }
 
-.d-range {
-    max-width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
-}
 
-.d-range button {
-    white-space: nowrap;
-}
 
 /* ───── dashboard user: beli stars ───── */
 .u-form {
@@ -1006,7 +1006,8 @@
     border: 0;
     background: transparent;
     font: inherit;
-    font-size: 14.5px;
+    /* minimal 16px — di bawah itu Safari iOS otomatis zoom in tiap kali input ini di-tap */
+    font-size: 16px;
     font-weight: 700;
     outline: none;
     text-align: right;
@@ -1073,7 +1074,8 @@
     border: 0;
     background: transparent;
     font: inherit;
-    font-size: 15px;
+    /* minimal 16px — di bawah itu Safari iOS otomatis zoom in tiap kali input ini di-tap */
+    font-size: 16px;
     font-weight: 500;
     outline: none;
 }
@@ -1231,7 +1233,8 @@
     border-radius: 16px;
     background: #f4f4f6;
     font: inherit;
-    font-size: 15px;
+    /* minimal 16px — di bawah itu Safari iOS otomatis zoom in tiap kali input ini di-tap */
+    font-size: 16px;
     font-weight: 500;
 }
 
@@ -1269,7 +1272,9 @@
     right: 6px;
     top: 50%;
     transform: translateY(-50%);
-    padding: 7px 10px;
+    /* padding lebih longgar dari sekadar bungkus teks — biar area sentuhnya
+       nggak terlalu kecil buat jari di HP (target minimal ±40px) */
+    padding: 12px 10px;
     border: 0;
     border-radius: 10px;
     background: transparent;
@@ -1344,11 +1349,7 @@
     }
 }
 
-/* sidebar ikut menempel saat scroll (desktop) */
-.dash {
-    overflow: clip;
-}
-
+/* sidebar menempel saat scroll di desktop */
 @media (min-width: 861px) {
     .d-side {
         position: sticky;
@@ -1358,12 +1359,6 @@
         overflow-y: auto;
     }
 }
-
-/* Dulu di sini ada override ".d-side { position: sticky }" buat HP — sekarang
-   udah gak dipakai lagi karena posisi/perilaku sidebar di HP (position:fixed,
-   drawer buka-tutup) sudah diatur lengkap di blok "@media (max-width: 860px)"
-   di atas; aturan sticky yang lama itu sengaja dihapus total supaya gak
-   nimpa/kebentrok sama drawer barunya (sticky vs fixed beda perilaku). */
 
 .u-narrow {
     max-width: 520px;
@@ -1375,6 +1370,7 @@
     padding: 4px;
     border-radius: 999px;
     background: #f4f4f6;
+    max-width: 100%;
 }
 
 .u-kind button {
@@ -1410,10 +1406,6 @@
 
 .u-packs.u-packs-3 {
     grid-template-columns: repeat(3, 1fr);
-}
-
-.u-kind {
-    max-width: 100%;
 }
 
 @media (max-width: 860px) {
@@ -1965,4 +1957,86 @@
 
 .admin-login-back:hover {
     color: #ffffff;
+}
+/* ---- utility classes untuk inline styles yang sudah dipindahkan ---- */
+
+/* .d-balance yang lebih ringkas (dipakai di halaman saldo sidebar) */
+.s-balance-sm {
+    min-height: 132px;
+}
+
+.s-balance-sm strong {
+    font-size: 36px;
+}
+
+/* kode referensi pembayaran — lebih kecil dari teks biasa */
+.s-ref-code {
+    font-size: 12px;
+}
+
+/* label "Pilih paket" dengan margin atas */
+.u-label-mt {
+    margin-top: 18px;
+}
+
+/* d-note dengan margin atas kecil */
+.d-note-sm-mt {
+    margin-top: 8px;
+}
+
+/* s-step dengan margin atas (langkah ke-3 di StarsView) */
+.s-step-mt {
+    margin-top: 24px;
+}
+
+/* fail reason di tabel pesanan */
+.d-mute-sm {
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+/* RSC order number di tabel pesanan */
+.d-mute-xs {
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+/* kolom ProfilView */
+.u-profil-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* note email di ProfilView */
+.d-note-email {
+    margin: -4px 0 4px;
+}
+
+/* link "Lihat semua" di kartu pesanan terbaru (BerandaView) */
+.d-see-all {
+    color: #2540ff;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.d-see-all:hover {
+    text-decoration: underline;
+}
+
+/* status pengecekan username Telegram di StarsView */
+.u-status {
+    display: block;
+    margin-top: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #8b8b94;
+}
+
+.u-status.ok {
+    color: #12874a;
+}
+
+.u-status.bad {
+    color: #c62d3a;
 }

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import DashboardView from "@/components/DashboardView";
+import AdminOverview from "@/components/AdminOverview";
 import SupplierBalanceCard from "@/components/SupplierBalanceCard";
 import { getAdminData } from "@/lib/actions/admin";
 
@@ -23,7 +23,7 @@ function BalanceSkeleton() {
 export default async function AdminPage() {
     const data = await getAdminData();
     return (
-        <DashboardView
+        <AdminOverview
             data={data}
             balanceSlot={
                 <Suspense fallback={<BalanceSkeleton />}>

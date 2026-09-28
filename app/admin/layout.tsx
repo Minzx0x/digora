@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "../dashboard/dashboard.css";
+import "../dashboard.css";
 
 export const metadata: Metadata = {
     title: "Admin — Digora",

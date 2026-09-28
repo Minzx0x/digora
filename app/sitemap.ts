@@ -4,7 +4,12 @@ import type { MetadataRoute } from "next";
 // Cuma halaman publik yang dimasukin (bukan /dashboard, /admin, /reset-password
 // dst yang butuh login atau cuma dipakai lewat link email/transaksional).
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.APP_URL || "https://digora.codes";
+  // PENTING: domain apex "digora.codes" (tanpa www) di-redirect 308 ke
+  // "www.digora.codes" di level DNS/Vercel — base URL di sitemap HARUS ikut
+  // versi yang benar-benar nge-serve (www), bukan yang redirect. Sitemap
+  // penuh URL yang redirect ditandai Google sebagai error dan halamannya
+  // ditahan dari index (ini penyebab kenapa cuma 1 halaman ke-index).
+  const base = process.env.APP_URL || "https://www.digora.codes";
   const now = new Date();
 
   const pages: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }[] = [

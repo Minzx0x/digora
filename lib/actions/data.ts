@@ -164,7 +164,7 @@ export async function buyOrderAction(input: {
             // balik ke PEMBELI di riwayat pesanannya sendiri, jadi harus teks yang
             // aman dibaca customer, bukan pesan debug internal.
             console.error("[order] gagal teruskan ke supplier:", e instanceof Error ? e.message : e);
-            const customerReason = "Pesanan gagal diproses oleh supplier. Saldo sudah dikembalikan.";
+            const customerReason = "Pesanan gagal diproses. Saldo sudah dikembalikan.";
             await supabase.rpc("sync_order_from_rsc", {
                 p_order_id: order.id,
                 p_rsc_number: null,
@@ -172,12 +172,12 @@ export async function buyOrderAction(input: {
                 p_new_status: "fail",
                 p_reason: customerReason,
             });
-            revalidatePath("/dashboard");
+            revalidatePath("/dashboard", "layout");
             return { error: customerReason };
         }
     }
 
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { error: null, orderCode: order?.order_code };
 }
 
@@ -188,7 +188,7 @@ export type DepositMethod = "qris" | "ewallet" | "bank";
 // ini SENGAJA tidak diekspor, cukup dipakai secara internal di file ini.
 const MIN_DEPOSIT_AMOUNT = 10000;
 
-// Sama persis dengan rumus biaya yang ditampilkan di UI (UserDashboard.tsx)
+// Sama persis dengan rumus biaya yang ditampilkan di UI (SaldoView.tsx)
 // supaya nominal yang benar-benar ditagihkan ke Paymenku tidak beda dengan
 // yang dilihat user sebelum klik "Isi saldo sekarang".
 function depositFee(method: DepositMethod, amount: number): number {
@@ -262,7 +262,7 @@ export async function createDepositAction(input: {
         // ketahuan kalau nanti mau di-debug.
         if (updateErr) console.error("[createDepositAction] gagal simpan info gateway:", updateErr.message);
 
-        revalidatePath("/dashboard");
+        revalidatePath("/dashboard", "layout");
         return { error: null, referenceId, payUrl: trx.payUrl, qrString: trx.qrString };
     } catch (e) {
         // Gagal di tahap bikin transaksi ke Paymenku (mis. API key belum diisi,
@@ -282,7 +282,7 @@ export async function cancelDepositAction(referenceId: string): Promise<{ error:
     const supabase = await createClient();
     const { error } = await supabase.rpc("cancel_own_pending_deposit", { p_reference_id: referenceId });
     if (error) return { error: friendlyDbError(error.message) };
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { error: null };
 }
 
@@ -295,7 +295,7 @@ export async function getDepositStatusAction(
     if (error) return { error: friendlyDbError(error.message) };
     const row = data as { status?: string; amount?: number } | null;
     if (!row?.status) return { error: "Transaksi tidak ditemukan." };
-    if (row.status === "paid") revalidatePath("/dashboard");
+    if (row.status === "paid") revalidatePath("/dashboard", "layout");
     return { error: null, status: row.status as "pending" | "paid" | "failed" | "expired", amount: row.amount };
 }
 
@@ -316,7 +316,7 @@ export async function updateProfileAction(input: {
         .eq("id", auth.user.id);
 
     if (error) return { error: "Gagal menyimpan profil." };
-    revalidatePath("/dashboard");
+    revalidatePath("/dashboard", "layout");
     return { error: null };
 }
 

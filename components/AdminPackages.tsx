@@ -9,7 +9,7 @@ import { syncTelegramCostFromRSC } from "@/lib/actions/rsc-sync";
 const rp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
 // Halaman admin terpisah untuk kelola Paket & Harga — sebelumnya nempel di
-// Ringkasan (id="paket" di dalam DashboardView), sekarang jadi route sendiri
+// Ringkasan (id="paket" di dalam AdminOverview), sekarang jadi route sendiri
 // /admin/paket biar konsisten sama Pesanan/Pelanggan/Pembayaran/Pengaturan
 // (klik di sidebar beneran pindah halaman, bukan cuma anchor-scroll).
 export default function AdminPackages({ data }: { data: PaketData }) {

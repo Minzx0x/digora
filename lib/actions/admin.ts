@@ -217,7 +217,7 @@ export async function updateUsdIdrRateAction(rate: number): Promise<{ error: str
     const supabase = await createClient();
     const { error } = await supabase.from("app_settings").update({ usd_idr_rate: rate }).eq("id", true);
     if (error) return { error: "Gagal menyimpan kurs. Pastikan akun ini admin." };
-    revalidatePath("/admin");
+    revalidatePath("/admin", "layout");
     return { error: null };
 }
 
@@ -237,8 +237,8 @@ export async function updatePackageCostAction(
         .update({ cost_price: costPrice, margin_percent: marginPercent })
         .eq("id", id);
     if (error) return { error: "Gagal menyimpan. Pastikan akun ini admin." };
-    revalidatePath("/admin");
-    revalidatePath("/dashboard");
+    revalidatePath("/admin", "layout");
+    revalidatePath("/dashboard", "layout");
     return { error: null };
 }
 
@@ -249,7 +249,7 @@ export async function addStockAction(amount: number): Promise<{ error: string | 
     const next = Math.max(0, Number(current?.stars_stock ?? 0) + Math.round(amount));
     const { error } = await supabase.from("app_settings").update({ stars_stock: next }).eq("id", true);
     if (error) return { error: "Gagal update stok. Pastikan akun ini admin." };
-    revalidatePath("/admin");
+    revalidatePath("/admin", "layout");
     return { error: null };
 }
 
@@ -299,8 +299,8 @@ export async function adminUpdateOrderStatusAction(
     });
     if (error) return { error: "Gagal update status. Pastikan akun ini admin." };
     revalidatePath("/admin/pesanan");
-    revalidatePath("/admin");
-    revalidatePath("/dashboard");
+    revalidatePath("/admin", "layout");
+    revalidatePath("/dashboard", "layout");
     return { error: null };
 }
 
@@ -319,12 +319,12 @@ export async function adminCheckRscOrderAction(
         const { error } = await supabase.rpc("admin_update_order_status", {
             p_order_id: orderId,
             p_status: mapRscStatus(rscOrder.status),
-            p_reason: mapRscStatus(rscOrder.status) === "fail" ? "Pesanan gagal diproses oleh supplier." : "",
+            p_reason: mapRscStatus(rscOrder.status) === "fail" ? "Pesanan gagal diproses." : "",
         });
         if (error) return { error: "Gagal simpan status. Pastikan akun ini admin." };
         revalidatePath("/admin/pesanan");
-        revalidatePath("/admin");
-        revalidatePath("/dashboard");
+        revalidatePath("/admin", "layout");
+        revalidatePath("/dashboard", "layout");
         return { error: null };
     } catch (e) {
         return { error: e instanceof RscError ? e.message : "Gagal ambil status dari supplier." };

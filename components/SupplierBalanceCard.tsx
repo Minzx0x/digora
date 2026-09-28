@@ -3,7 +3,7 @@ import { StarCoin } from "./Coins";
 
 const rp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
-// Server Component async TERPISAH dari DashboardView (client). page.tsx
+// Server Component async TERPISAH dari AdminOverview (client). page.tsx
 // membungkus ini dengan <Suspense>, jadi lambat/hang-nya API supplier cuma
 // bikin KARTU INI yang nunggu — sisa halaman Ringkasan (sidebar, pesanan,
 // grafik) langsung tampil dan tetap bisa dipakai.

@@ -198,9 +198,9 @@ export async function createPaymenkuTransaction(input: {
             customer_name: input.customerName,
             customer_email: input.customerEmail || undefined,
             // ⚠ Baru ketahuan dari error 422 percobaan pertama ("return_url":
-            // ["validation.required"]) — WAJIB diisi. Diarahkan balik ke tab
-            // "Isi Saldo" di dashboard, tempat kartu QR/status pembayaran ada.
-            return_url: `${APP_URL}/dashboard#saldo`,
+            // ["validation.required"]) — WAJIB diisi. Diarahkan balik ke halaman
+            // "Isi Saldo", tempat kartu QR/status pembayaran ada.
+            return_url: `${APP_URL}/dashboard/saldo`,
         }),
     });
     return parseTransaction(json, input.referenceId);

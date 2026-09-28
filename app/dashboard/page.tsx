@@ -1,8 +1,7 @@
-import UserDashboard from "@/components/UserDashboard";
-import { getDashboardData } from "@/lib/actions/data";
-import { getCatalog } from "@/lib/actions/catalog";
+import { redirect } from "next/navigation";
 
-export default async function DashboardPage() {
-    const [data, catalog] = await Promise.all([getDashboardData(), getCatalog()]);
-    return <UserDashboard initial={data} catalog={catalog} />;
+// /dashboard sendiri bukan halaman — cuma pintu masuk yang diteruskan ke
+// /dashboard/beranda (route asli, lihat app/dashboard/beranda/page.tsx).
+export default function DashboardPage() {
+    redirect("/dashboard/beranda");
 }
