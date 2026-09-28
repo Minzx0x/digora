@@ -93,15 +93,6 @@ export default function AdminSidebar({ active }: { active: AdminSection }) {
                         <span className="d-link-label">Keluar</span>
                     </a>
                 </nav>
-
-                <div className="d-side-foot">
-                    <b>Butuh bantuan?</b>
-                    Hubungi tim Digora kalau ada kendala pesanan.
-                    <br />
-                    <a href="https://t.me/Digoracs" target="_blank" rel="noopener noreferrer">
-                        Chat admin
-                    </a>
-                </div>
             </aside>
         </>
     );

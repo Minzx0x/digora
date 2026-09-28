@@ -8,17 +8,15 @@ import { verifyPaymenkuSignature, parsePaymenkuWebhookPayload, mapPaymenkuStatus
 // sesi login sama sekali di sini — makanya pakai service-role client
 // (lib/supabase/service.ts) buat update tabel deposits & saldo.
 //
-// ⚠ Nama header signature belum dipastikan dari docs publik Paymenku — cek
-// di dashboard kamu (biasanya di halaman "Webhook" / "Integrasi") lalu isi
-// PAYMENKU_SIGNATURE_HEADER di .env.local kalau ternyata bukan yang default
-// di bawah ini.
-const SIGNATURE_HEADER = (process.env.PAYMENKU_SIGNATURE_HEADER || "x-paymenku-signature").toLowerCase();
-
+// Nama header sesuai contoh resmi di dashboard Paymenku (menu Webhook):
+// X-PaymenKu-Signature + X-PaymenKu-Timestamp. Header HTTP tidak case-sensitive
+// jadi req.headers.get() otomatis cocok berapa pun kapitalisasinya.
 export async function POST(req: NextRequest) {
     const rawBody = await req.text();
-    const signature = req.headers.get(SIGNATURE_HEADER);
+    const signature = req.headers.get("x-paymenku-signature");
+    const timestamp = req.headers.get("x-paymenku-timestamp");
 
-    if (!verifyPaymenkuSignature(rawBody, signature)) {
+    if (!verifyPaymenkuSignature(rawBody, signature, timestamp)) {
         console.error("[paymenku webhook] signature tidak valid atau PAYMENKU_WEBHOOK_SECRET belum diisi");
         return NextResponse.json({ error: "invalid_signature" }, { status: 401 });
     }

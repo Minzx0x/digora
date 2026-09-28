@@ -245,18 +245,26 @@ export function parsePaymenkuWebhookPayload(json: unknown): PaymenkuWebhookPaylo
 }
 
 /**
- * Verifikasi signature webhook Paymenku (HMAC-SHA256 atas raw body, pakai
- * PAYMENKU_WEBHOOK_SECRET). ⚠ Nama header signature belum dipastikan dari
- * docs publik — default "x-paymenku-signature", bisa diubah lewat env
- * PAYMENKU_SIGNATURE_HEADER kalau ternyata beda di dashboard kamu.
+ * Verifikasi signature webhook Paymenku, sesuai contoh resmi di dashboard
+ * Paymenku (menu Webhook → "Cara Verifikasi Signature"):
+ *   expected = HMAC-SHA256(timestamp + "." + rawBody, PAYMENKU_WEBHOOK_SECRET)
+ * dicocokkan ke header X-PaymenKu-Signature, dengan timestamp dari header
+ * X-PaymenKu-Timestamp. KEDUA header itu wajib ada.
  */
-export function verifyPaymenkuSignature(rawBody: string, signatureHeader: string | null): boolean {
+export function verifyPaymenkuSignature(
+    rawBody: string,
+    signatureHeader: string | null,
+    timestampHeader: string | null,
+): boolean {
     const secret = process.env.PAYMENKU_WEBHOOK_SECRET;
     if (!secret) return false;
-    if (!signatureHeader) return false;
+    if (!signatureHeader || !timestampHeader) return false;
 
     const crypto = require("node:crypto") as typeof import("node:crypto");
-    const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+    const expected = crypto
+        .createHmac("sha256", secret)
+        .update(`${timestampHeader}.${rawBody}`)
+        .digest("hex");
 
     // signature kadang dikirim dengan prefix "sha256=" — dukung dua-duanya
     const given = signatureHeader.replace(/^sha256=/i, "").trim().toLowerCase();

@@ -47,7 +47,8 @@ function timeAgo(iso: string): string {
 
 type Kind = "stars" | "premium";
 
-const MIN_CUSTOM_STARS = 10;
+const MIN_CUSTOM_STARS = 50;
+const MAX_CUSTOM_STARS = 10000;
 
 // harga per Stars mengikuti tingkatan paket asli dari database (makin banyak, makin
 // murah per Stars) — dipakai untuk menghitung harga saat user masukkan jumlah Stars
@@ -295,6 +296,7 @@ export default function UserDashboard({ initial, catalog }: { initial: Dashboard
     const total = pack.price; // dibayar dari saldo, tanpa biaya tambahan
     const kurang = Math.max(0, total - saldo);
     const customTooLow = isCustom && customStarsNum > 0 && customStarsNum < MIN_CUSTOM_STARS;
+    const customTooHigh = isCustom && customStarsNum > MAX_CUSTOM_STARS;
 
     const depValue = depCustom ? Number(depCustom) : depAmount;
     const depFee = depPay === "qris" ? Math.round(depValue * 0.007) : depPay === "ewallet" ? 1500 : 3000;
@@ -307,6 +309,10 @@ export default function UserDashboard({ initial, catalog }: { initial: Dashboard
         setDone(null);
         if (isCustom && customStarsNum < MIN_CUSTOM_STARS) {
             setErr(`Jumlah Stars minimal ${num(MIN_CUSTOM_STARS)}.`);
+            return;
+        }
+        if (isCustom && customStarsNum > MAX_CUSTOM_STARS) {
+            setErr(`Jumlah Stars maksimal ${num(MAX_CUSTOM_STARS)}.`);
             return;
         }
         const u = to.trim().replace(/^@/, "");
@@ -678,10 +684,12 @@ export default function UserDashboard({ initial, catalog }: { initial: Dashboard
                                 {packs.length === 0 && <p className="d-note">Katalog belum tersedia. Hubungi admin.</p>}
 
                                 {kind === "stars" && (
-                                    <div className={`u-custom ${isCustom ? "on" : ""} ${customTooLow ? "err" : ""}`}>
+                                    <div className={`u-custom ${isCustom ? "on" : ""} ${customTooLow || customTooHigh ? "err" : ""}`}>
                                         <div className="u-custom-txt">
                                             <b>Jumlah lain</b>
-                                            <span>Masukkan sendiri, minimal {num(MIN_CUSTOM_STARS)} Stars</span>
+                                            <span>
+                                                Masukkan sendiri, {num(MIN_CUSTOM_STARS)}–{num(MAX_CUSTOM_STARS)} Stars
+                                            </span>
                                         </div>
                                         <div className="u-custom-input">
                                             <input
@@ -689,7 +697,9 @@ export default function UserDashboard({ initial, catalog }: { initial: Dashboard
                                                 value={customStars ? num(customStarsNum) : ""}
                                                 onFocus={() => setPackIdx(-1)}
                                                 onChange={(e) => {
-                                                    setCustomStars(e.target.value.replace(/\D/g, ""));
+                                                    const raw = e.target.value.replace(/\D/g, "");
+                                                    const n = raw ? Math.min(Number(raw), MAX_CUSTOM_STARS) : 0;
+                                                    setCustomStars(raw ? String(n) : "");
                                                     setPackIdx(-1);
                                                 }}
                                                 placeholder="cth. 750"
@@ -697,11 +707,14 @@ export default function UserDashboard({ initial, catalog }: { initial: Dashboard
                                             />
                                             <span>Stars</span>
                                         </div>
-                                        {isCustom && customStarsNum >= MIN_CUSTOM_STARS && (
+                                        {isCustom && customStarsNum >= MIN_CUSTOM_STARS && customStarsNum <= MAX_CUSTOM_STARS && (
                                             <span className="u-custom-price">≈ {rp(pack.price)}</span>
                                         )}
                                         {customTooLow && (
                                             <span className="u-custom-price bad">Minimal {num(MIN_CUSTOM_STARS)} Stars</span>
+                                        )}
+                                        {customTooHigh && (
+                                            <span className="u-custom-price bad">Maksimal {num(MAX_CUSTOM_STARS)} Stars</span>
                                         )}
                                     </div>
                                 )}
@@ -765,7 +778,11 @@ export default function UserDashboard({ initial, catalog }: { initial: Dashboard
                                     <button
                                         className="d-btn u-go"
                                         type="submit"
-                                        disabled={kurang > 0 || buying || (isCustom && customStarsNum < MIN_CUSTOM_STARS)}
+                                        disabled={
+                                            kurang > 0 ||
+                                            buying ||
+                                            (isCustom && (customStarsNum < MIN_CUSTOM_STARS || customStarsNum > MAX_CUSTOM_STARS))
+                                        }
                                     >
                                         {buying ? "Memproses…" : "Beli dengan saldo"}
                                     </button>

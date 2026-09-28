@@ -78,6 +78,7 @@ export async function getRscStarsRateUsd(): Promise<number> {
     const json = await rscGet("/telegram/stars");
     const rate = extractUsdPerStar(json);
     if (rate === null) {
+        console.error("[rsc] GET /telegram/stars balas format yang tidak dikenali:", JSON.stringify(json));
         throw new RscError(
             "Format respons GET /telegram/stars dari RSC tidak dikenali — cek console server untuk detail mentahnya.",
             undefined,
@@ -92,6 +93,7 @@ export async function getRscPremiumRatesUsd(): Promise<Record<number, number>> {
     const json = await rscGet("/telegram/premium");
     const rates = extractPremiumRatesUsd(json);
     if (!rates || Object.keys(rates).length === 0) {
+        console.error("[rsc] GET /telegram/premium balas format yang tidak dikenali:", JSON.stringify(json));
         throw new RscError(
             "Format respons GET /telegram/premium dari RSC tidak dikenali — cek console server untuk detail mentahnya.",
             undefined,
@@ -116,7 +118,7 @@ function toNum(v: unknown): number | null {
 function extractUsdPerStar(json: unknown): number | null {
     if (json && typeof json === "object" && !Array.isArray(json)) {
         const obj = json as Record<string, unknown>;
-        for (const key of ["price_usd", "rate_usd", "usd_per_star", "per_star_usd"]) {
+        for (const key of ["price_per_star", "price_usd", "rate_usd", "usd_per_star", "per_star_usd"]) {
             const n = toNum(obj[key]);
             if (n !== null) return n;
         }
