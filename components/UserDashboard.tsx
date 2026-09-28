@@ -154,6 +154,10 @@ export default function UserDashboard({ initial, catalog }: { initial: Dashboard
     const [tg, setTg] = useState<{ state: "idle" | "checking" | "ok" | "bad" | "unknown"; msg: string }>({ state: "idle", msg: "" });
     const [done, setDone] = useState<string | null>(null);
     const [current, setCurrent] = useState<View>("beranda");
+    // Sidebar di HP sekarang nyembul sebagai drawer (nutup default), dibuka lewat
+    // tombol hamburger di header, biar konten utama gak keambil-ambil ruang terus
+    // sama menu yang nempel permanen di kiri layar sempit.
+    const [navOpen, setNavOpen] = useState(false);
     const [profile, setProfile] = useState({
         name: initial.profile?.name ?? "",
         tg: initial.profile?.telegramUsername ?? "",
@@ -239,6 +243,7 @@ export default function UserDashboard({ initial, catalog }: { initial: Dashboard
         setErr("");
         window.location.hash = v;
         window.scrollTo({ top: 0 });
+        setNavOpen(false);
     }
 
     async function saveProfile(e: React.FormEvent) {
@@ -481,10 +486,28 @@ export default function UserDashboard({ initial, catalog }: { initial: Dashboard
 
     return (
         <div className="dash">
-            <aside className="d-side">
+            {/* Backdrop gelap di belakang drawer — cuma kelihatan & aktif kalau drawer
+          lagi kebuka di HP (diatur lewat CSS, gak dirender apa-apa di desktop).
+          Klik di sini nutup drawer lagi. */}
+            <div
+                className={`d-side-backdrop ${navOpen ? "show" : ""}`}
+                onClick={() => setNavOpen(false)}
+                aria-hidden="true"
+            />
+
+            <aside className={`d-side ${navOpen ? "open" : ""}`}>
                 <div className="d-brand">
                     <Brand />
                 </div>
+
+                <button
+                    type="button"
+                    className="d-side-close"
+                    aria-label="Tutup menu"
+                    onClick={() => setNavOpen(false)}
+                >
+                    <Ico d="M6 6l12 12M18 6L6 18" />
+                </button>
 
                 <nav className="d-nav" aria-label="Menu akun">
                     {NAV.map((n) => (
@@ -531,6 +554,14 @@ export default function UserDashboard({ initial, catalog }: { initial: Dashboard
 
             <main className="d-main">
                 <header className="d-top">
+                    <button
+                        type="button"
+                        className="d-menu-btn"
+                        aria-label="Buka menu"
+                        onClick={() => setNavOpen(true)}
+                    >
+                        <Ico d="M4 7h16M4 12h16M4 17h16" />
+                    </button>
                     <div>
                         <h1 className="d-hi">{TITLES[current][0]}</h1>
                         <p className="d-sub">{TITLES[current][1]}</p>

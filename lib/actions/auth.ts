@@ -52,6 +52,31 @@ export async function signOutAction(): Promise<void> {
     await supabase.auth.signOut();
 }
 
+// Langkah 1 dari alur "lupa password": kirim email berisi link reset ke
+// Supabase. SENGAJA selalu balas sukses walau email-nya gak terdaftar (itu
+// juga cara Supabase sendiri kerja) — biar orang gak bisa nebak-nebak email
+// mana yang punya akun di Digora cuma dari respons form ini.
+export async function requestPasswordResetAction(email: string): Promise<{ error: string | null }> {
+    const supabase = await createClient();
+    // APP_URL diisi di .env.local kalau domain produksi sudah ada, mis.
+    // APP_URL=https://digora.id — kalau kosong dianggap masih dites lokal.
+    const appUrl = process.env.APP_URL || "http://localhost:3000";
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent("/reset-password")}`,
+    });
+    if (error) return { error: friendlyAuthError(error.message) };
+    return { error: null };
+}
+
+// Langkah 2: dipanggil dari halaman /reset-password SETELAH link di email
+// diklik dan sesi pemulihan sudah aktif (lihat app/auth/callback/route.ts).
+export async function updatePasswordAction(newPassword: string): Promise<{ error: string | null }> {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { error: friendlyAuthError(error.message) };
+    return { error: null };
+}
+
 // Login khusus /admin: sama seperti signInAction, tapi setelah berhasil dicek
 // dulu apakah akun ini memang role "admin" di tabel profiles. Kalau bukan,
 // sesi langsung di-signout lagi supaya tidak nyangkut login sebagai user biasa.

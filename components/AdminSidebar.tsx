@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Brand from "./Brand";
@@ -29,6 +30,10 @@ export type AdminSection = "ringkasan" | "pesanan" | "paket" | "pelanggan" | "pe
 // konsisten. "active" menandai menu mana yang sedang dibuka (bold + latar hitam).
 export default function AdminSidebar({ active }: { active: AdminSection }) {
     const router = useRouter();
+    // Di HP, sidebar ini jadi drawer yang nutup default (sama kayak dashboard
+    // pelanggan) — dibuka lewat tombol bulat ngambang di pojok kiri-bawah,
+    // biar konten halaman admin (tabel, form, dst) dapet jatah lebar penuh.
+    const [open, setOpen] = useState(false);
 
     // Link (bukan <a> biasa) supaya pindah antar halaman admin berasa instan —
     // klik-nya jadi client-side navigation + langsung dikasih skeleton loading.tsx,
@@ -43,49 +48,61 @@ export default function AdminSidebar({ active }: { active: AdminSection }) {
     // (ringan), data asli baru diambil pas menu itu benar-benar diklik — nav
     // tetap berasa cepat (skeleton-nya sudah siap) tanpa nembak 5 query sekaligus.
     const link = (section: AdminSection, href: string, icon: string, label: string) => (
-        <Link className={`d-link ${active === section ? "on" : ""}`} href={href} title={label}>
+        <Link className={`d-link ${active === section ? "on" : ""}`} href={href} title={label} onClick={() => setOpen(false)}>
             <Ico d={icon} />
             <span className="d-link-label">{label}</span>
         </Link>
     );
 
     return (
-        <aside className="d-side">
-            <div className="d-brand">
-                <Brand />
-            </div>
+        <>
+            <button type="button" className="d-menu-btn-fixed" aria-label="Buka menu" onClick={() => setOpen(true)}>
+                <Ico d="M4 7h16M4 12h16M4 17h16" />
+            </button>
 
-            <nav className="d-nav" aria-label="Menu dashboard">
-                {link("ringkasan", "/admin", I.home, "Ringkasan")}
-                {link("pesanan", "/admin/pesanan", I.bag, "Pesanan")}
-                {link("paket", "/admin/paket", I.tag, "Paket & Harga")}
-                {link("pelanggan", "/admin/pelanggan", I.users, "Pelanggan")}
-                {link("pembayaran", "/admin/pembayaran", I.card, "Pembayaran")}
-                {link("pengaturan", "/admin/pengaturan", I.gear, "Pengaturan")}
-                <a
-                    className="d-link"
-                    href="/admin/login"
-                    title="Keluar"
-                    onClick={async (e) => {
-                        e.preventDefault();
-                        await signOutAction();
-                        router.push("/admin/login");
-                        router.refresh();
-                    }}
-                >
-                    <Ico d={I.out} />
-                    <span className="d-link-label">Keluar</span>
-                </a>
-            </nav>
+            <div className={`d-side-backdrop ${open ? "show" : ""}`} onClick={() => setOpen(false)} aria-hidden="true" />
 
-            <div className="d-side-foot">
-                <b>Butuh bantuan?</b>
-                Hubungi tim Digora kalau ada kendala pesanan.
-                <br />
-                <a href="https://t.me/Digoracs" target="_blank" rel="noopener noreferrer">
-                    Chat admin
-                </a>
-            </div>
-        </aside>
+            <aside className={`d-side ${open ? "open" : ""}`}>
+                <div className="d-brand">
+                    <Brand />
+                </div>
+
+                <button type="button" className="d-side-close" aria-label="Tutup menu" onClick={() => setOpen(false)}>
+                    <Ico d="M6 6l12 12M18 6L6 18" />
+                </button>
+
+                <nav className="d-nav" aria-label="Menu dashboard">
+                    {link("ringkasan", "/admin", I.home, "Ringkasan")}
+                    {link("pesanan", "/admin/pesanan", I.bag, "Pesanan")}
+                    {link("paket", "/admin/paket", I.tag, "Paket & Harga")}
+                    {link("pelanggan", "/admin/pelanggan", I.users, "Pelanggan")}
+                    {link("pembayaran", "/admin/pembayaran", I.card, "Pembayaran")}
+                    {link("pengaturan", "/admin/pengaturan", I.gear, "Pengaturan")}
+                    <a
+                        className="d-link"
+                        href="/admin/login"
+                        title="Keluar"
+                        onClick={async (e) => {
+                            e.preventDefault();
+                            await signOutAction();
+                            router.push("/admin/login");
+                            router.refresh();
+                        }}
+                    >
+                        <Ico d={I.out} />
+                        <span className="d-link-label">Keluar</span>
+                    </a>
+                </nav>
+
+                <div className="d-side-foot">
+                    <b>Butuh bantuan?</b>
+                    Hubungi tim Digora kalau ada kendala pesanan.
+                    <br />
+                    <a href="https://t.me/Digoracs" target="_blank" rel="noopener noreferrer">
+                        Chat admin
+                    </a>
+                </div>
+            </aside>
+        </>
     );
 }

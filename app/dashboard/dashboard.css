@@ -678,78 +678,132 @@
     }
 }
 
+/* Tombol hamburger (buka drawer) & tombol X (tutup drawer) cuma ada gunanya
+   di HP — di desktop sidebar-nya emang selalu kelihatan di kiri, jadi kedua
+   tombol ini disembunyikan total di layar lebar. */
+.d-menu-btn,
+.d-menu-btn-fixed,
+.d-side-close {
+    display: none;
+}
+
+.d-side-backdrop {
+    display: none;
+}
+
 @media (max-width: 860px) {
 
-    /* Sidebar tetap di kiri kayak versi desktop (bukan pindah ke atas) —
-     cuma dipersempit jadi rel ikon supaya konten utama tetap kebagian
-     ruang di layar HP yang sempit. Karena semua menu kelihatan sekaligus
-     dalam satu kolom vertikal, gak ada lagi yang kepotong/kescroll ke
-     samping kayak sebelumnya. */
+    /* Sidebar sekarang jadi DRAWER: nyembul dari kiri lewat tombol hamburger di
+     header, bukan nempel permanen kayak rel ikon sebelumnya — jadi konten
+     utama dapet jatah lebar penuh terus di layar HP, sidebar cuma muncul
+     pas emang dibutuhin. */
     .dash {
-        grid-template-columns: 84px 1fr;
+        grid-template-columns: 1fr;
         border-radius: 24px;
     }
 
+    .d-menu-btn {
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 40px;
+        height: 40px;
+        border: 0;
+        border-radius: 12px;
+        background: #f4f4f6;
+        color: #0b0b0c;
+        cursor: pointer;
+    }
+
+    .d-menu-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Dipakai di admin: AdminSidebar gak punya header bareng kayak dashboard
+     pelanggan, jadi tombol togglenya ngambang sendiri kayak floating action
+     button di pojok kiri-BAWAH (bukan atas, biar gak numpuk sama judul
+     halaman "Halo, Digora" dkk yang mulai dari pojok kiri-atas juga). */
+    .d-menu-btn-fixed {
+        display: grid;
+        place-items: center;
+        position: fixed;
+        bottom: 20px;
+        left: 16px;
+        width: 48px;
+        height: 48px;
+        border: 0;
+        border-radius: 50%;
+        background: #0b0b0c;
+        color: #ffffff;
+        box-shadow: 0 8px 20px rgba(11, 11, 12, 0.3);
+        z-index: 42;
+        cursor: pointer;
+    }
+
+    .d-menu-btn-fixed svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .d-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .d-side-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(11, 11, 12, 0.45);
+        z-index: 40;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    .d-side-backdrop.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
     .d-side {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0;
-        padding: 16px 10px;
-        background: #fafafb;
-        border-right: 1px solid #ececf0;
-        border-bottom: 0;
-        overflow-x: hidden;
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: 78vw;
+        max-width: 300px;
+        z-index: 41;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        border-radius: 0 24px 24px 0;
+        box-shadow: 12px 0 32px rgba(11, 11, 12, 0.18);
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
     }
 
-    .d-side .d-brand {
-        flex: none;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        padding: 0 0 16px;
-        margin: 0 0 12px;
+    .d-side.open {
+        transform: translateX(0);
     }
 
-    /* teks "Digora" disembunyikan di rel sempit ini, logonya aja cukup */
-    .d-side .d-brand span {
-        display: none;
+    .d-side-close {
+        display: grid;
+        place-items: center;
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 34px;
+        height: 34px;
+        border: 0;
+        border-radius: 10px;
+        background: #f4f4f6;
+        color: #0b0b0c;
+        cursor: pointer;
     }
 
-    .d-nav {
-        flex-direction: column;
-        flex-wrap: nowrap;
-        width: 100%;
-        gap: 6px;
-    }
-
-    .d-link {
-        flex-direction: column;
-        justify-content: center;
-        width: 100%;
-        gap: 4px;
-        padding: 10px 2px;
-        border-radius: 16px;
-        text-align: center;
-        white-space: normal;
-        color: #8b8b94;
-    }
-
-    .d-link svg {
-        width: 19px;
-        height: 19px;
-    }
-
-    .d-link-label {
-        font-size: 10px;
-        font-weight: 700;
-        line-height: 1.2;
-        letter-spacing: -0.01em;
-    }
-
-    .d-side-foot {
-        display: none;
+    .d-side-close svg {
+        width: 16px;
+        height: 16px;
     }
 
     .d-main {
@@ -1305,15 +1359,11 @@
     }
 }
 
-@media (max-width: 860px) {
-    .d-side {
-        position: sticky;
-        top: 0;
-        align-self: start;
-        height: 100vh;
-        z-index: 5;
-    }
-}
+/* Dulu di sini ada override ".d-side { position: sticky }" buat HP — sekarang
+   udah gak dipakai lagi karena posisi/perilaku sidebar di HP (position:fixed,
+   drawer buka-tutup) sudah diatur lengkap di blok "@media (max-width: 860px)"
+   di atas; aturan sticky yang lama itu sengaja dihapus total supaya gak
+   nimpa/kebentrok sama drawer barunya (sticky vs fixed beda perilaku). */
 
 .u-narrow {
     max-width: 520px;

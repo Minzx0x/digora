@@ -365,6 +365,26 @@
     color: #2540ff;
 }
 
+/* Halaman auth yang "berdiri sendiri" — lupa password & buat password baru.
+   Bukan panel geser dua kolom kayak login/daftar (.auth), cuma satu kartu
+   simpel di tengah, tapi tetap pakai field/auth-submit/auth-alert/dst dari
+   file yang sama biar tampilannya senada. */
+.auth-solo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-radius: 32px;
+    min-height: calc(100vh - 24px);
+    padding: 28px 40px 32px;
+}
+
+@media (max-width: 640px) {
+    .auth-solo {
+        padding: 24px 20px 28px;
+    }
+}
+
 .auth-terms {
     margin: 0;
     font-size: 12.5px;

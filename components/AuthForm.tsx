@@ -176,8 +176,15 @@ export default function AuthForm({ mode, onSwitch }: { mode: Mode; onSwitch?: ()
                         <label className="auth-check" style={{ fontWeight: 500 }}>
                             <input type="checkbox" name="terms" />
                             <span className="auth-terms">
-                                Saya setuju dengan <a className="auth-link" href="#">Syarat &amp; Ketentuan</a> dan{" "}
-                                <a className="auth-link" href="#">Kebijakan Privasi</a> Digora.
+                                Saya setuju dengan{" "}
+                                <a className="auth-link" href="/syarat-ketentuan" target="_blank" rel="noopener noreferrer">
+                                    Syarat &amp; Ketentuan
+                                </a>{" "}
+                                dan{" "}
+                                <a className="auth-link" href="/kebijakan-privasi" target="_blank" rel="noopener noreferrer">
+                                    Kebijakan Privasi
+                                </a>{" "}
+                                Digora.
                             </span>
                         </label>
                         {errors.terms && <span className="field-err">{errors.terms}</span>}
@@ -188,7 +195,7 @@ export default function AuthForm({ mode, onSwitch }: { mode: Mode; onSwitch?: ()
                             <input type="checkbox" name="remember" />
                             Ingat saya
                         </label>
-                        <a className="auth-link" href="#">
+                        <a className="auth-link" href="/lupa-password">
                             Lupa password?
                         </a>
                     </div>
