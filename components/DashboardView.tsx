@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import AdminSidebar from "./AdminSidebar";
 import type { AdminData, AdminStatus } from "@/lib/actions/admin";
-import { StarCoin } from "./Coins";
 
 const STATUS_LABEL: Record<AdminStatus, string> = {
     ok: "Selesai",
@@ -90,7 +89,7 @@ function Chart({ data }: { data: readonly { l: string; v: number }[] }) {
 
 /* ───────── halaman ───────── */
 
-export default function DashboardView({ data }: { data: AdminData }) {
+export default function DashboardView({ data, balanceSlot }: { data: AdminData; balanceSlot: ReactNode }) {
     const [range, setRange] = useState<"7 hari" | "30 hari">("7 hari");
     const [filter, setFilter] = useState<"all" | AdminStatus>("all");
     const [q, setQ] = useState("");
@@ -131,31 +130,7 @@ export default function DashboardView({ data }: { data: AdminData }) {
                 </header>
 
                 <section className="d-grid-top">
-                    <div className="d-balance">
-                        <div className="d-balance-art" aria-hidden="true">
-                            <StarCoin scale={0.7} className="float-slow" />
-                        </div>
-                        <div style={{ position: "relative", zIndex: 1 }}>
-                            <small>Saldo RSC (resell.codes)</small>
-                            <strong title={data.rscBalanceError ?? undefined}>
-                                {!data.rscConfigured
-                                    ? "Belum terhubung"
-                                    : data.rscBalanceIdr !== null
-                                        ? rp(data.rscBalanceIdr)
-                                        : "Gagal dimuat"}
-                            </strong>
-                        </div>
-                        <div className="d-balance-foot">
-                            <a
-                                className="d-pill solid"
-                                href="https://resell.codes"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Buka RSC ↗
-                            </a>
-                        </div>
-                    </div>
+                    {balanceSlot}
 
                     <div className="d-stats">
                         <div className="d-stat">

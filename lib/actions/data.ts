@@ -3,7 +3,7 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { buyTelegramStarsOnRsc, buyTelegramPremiumOnRsc, mapRscStatus, RscError } from "@/lib/rsc";
+import { buyTelegramStarsOnRsc, buyTelegramPremiumOnRsc, mapRscStatus } from "@/lib/rsc";
 import { createPaymenkuTransaction, PAYMENKU_CHANNEL_CODE, PaymenkuError } from "@/lib/paymenku";
 
 export type Status = "ok" | "proc" | "wait" | "fail";
@@ -159,16 +159,21 @@ export async function buyOrderAction(input: {
                 p_reason: "",
             });
         } catch (e) {
-            const reason = e instanceof RscError ? e.message : "Gagal meneruskan pesanan ke supplier.";
+            // Detail teknisnya (status HTTP, pesan mentah dari supplier, dst) HANYA
+            // ke terminal server — fail_reason ini kesimpan di DB dan ditampilkan
+            // balik ke PEMBELI di riwayat pesanannya sendiri, jadi harus teks yang
+            // aman dibaca customer, bukan pesan debug internal.
+            console.error("[order] gagal teruskan ke supplier:", e instanceof Error ? e.message : e);
+            const customerReason = "Pesanan gagal diproses oleh supplier. Saldo sudah dikembalikan.";
             await supabase.rpc("sync_order_from_rsc", {
                 p_order_id: order.id,
                 p_rsc_number: null,
                 p_rsc_status: "failed",
                 p_new_status: "fail",
-                p_reason: reason,
+                p_reason: customerReason,
             });
             revalidatePath("/dashboard");
-            return { error: `Pesanan gagal diproses supplier: ${reason} Saldo sudah dikembalikan.` };
+            return { error: customerReason };
         }
     }
 

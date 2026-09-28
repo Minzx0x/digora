@@ -1,15 +1,30 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { getRscBalanceUsd, getRscOrderStatus, mapRscStatus, RscError } from "@/lib/rsc";
 import type { PackageRow } from "@/lib/actions/catalog";
 
 // Dipakai berulang di semua action admin.ts: pastikan yang manggil sudah login
 // DAN role-nya admin, sebelum lanjut baca/ubah data lintas-user. proxy.ts sudah
-// menolak akses ke /admin duluan, ini lapisan jaga-jaga kedua di server action.
+// menolak akses ke /admin duluan (dan role-nya sudah dicek di sana juga) — ini
+// lapisan jaga-jaga kedua, tapi TIDAK perlu ulang auth.getUser() + query role
+// dari nol tiap panggil (itu 2 round-trip Supabase yang bikin tiap pindah
+// menu admin kerasa berat). proxy.ts nitipin hasil verifikasinya lewat header
+// x-digora-uid/x-digora-role; kalau ada, langsung dipercaya. Fallback ke cara
+// lama cuma buat kondisi yang gak lewat proxy.ts (mis. dipanggil dari luar
+// alur normal), jadi tetap aman.
 async function requireAdmin() {
     const supabase = await createClient();
+    const h = await headers();
+    const headerUid = h.get("x-digora-uid");
+    const headerRole = h.get("x-digora-role");
+
+    if (headerUid) {
+        return { supabase, uid: headerUid, ok: headerRole === "admin" };
+    }
+
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) return { supabase, uid: null as string | null, ok: false as const };
     const { data: me } = await supabase.from("profiles").select("role").eq("id", auth.user.id).maybeSingle();
@@ -33,16 +48,18 @@ export type AdminOrderRow = {
 
 export type RevenuePoint = { l: string; v: number };
 
-export type AdminData = {
-    isAdmin: boolean;
-    // Dulu ini angka "stok Stars" yang diisi manual admin (addStockAction).
-    // Sekarang diganti saldo ASLI yang masih ada di akun supplier RSC
-    // (resell.codes) — itu yang beneran membatasi berapa banyak pesanan Stars
-    // & Premium yang masih bisa diteruskan ke pelanggan. Dikonversi ke Rupiah
-    // pakai kurs yang sama dengan Paket & Harga (usd_idr_rate).
+// Saldo supplier dipisah dari AdminData dan diambil lewat getRscBalance()
+// sendiri (lihat di bawah), supaya halaman Ringkasan TIDAK ikut nunggu kalau
+// API supplier lambat/hang — cuma kartu saldo ini yang nunggu, di-stream
+// belakangan lewat <Suspense>, sisanya (pesanan, grafik, dll) langsung tampil.
+export type RscBalanceInfo = {
     rscBalanceIdr: number | null;
     rscConfigured: boolean;
     rscBalanceError: string | null;
+};
+
+export type AdminData = {
+    isAdmin: boolean;
     todayOrders: number;
     todayOrdersDelta: number;
     todayRevenue: number;
@@ -57,9 +74,6 @@ export type AdminData = {
 
 const EMPTY: AdminData = {
     isAdmin: false,
-    rscBalanceIdr: null,
-    rscConfigured: false,
-    rscBalanceError: null,
     todayOrders: 0,
     todayOrdersDelta: 0,
     todayRevenue: 0,
@@ -97,29 +111,18 @@ export async function getAdminData(): Promise<AdminData> {
     const start30 = new Date(startOfToday);
     start30.setDate(start30.getDate() - 29);
 
-    const rscConfigured = !!process.env.RSC_API_KEY;
-
-    const [{ data: settings }, { count: customerCount }, { data: ordersRaw }, { data: last30 }, rscBalanceResult] =
-        await Promise.all([
-            supabase.from("app_settings").select("usd_idr_rate").eq("id", true).maybeSingle(),
-            supabase.from("profiles").select("id", { count: "exact", head: true }),
-            supabase
-                .from("orders")
-                .select(
-                    "id, order_code, target_username, package_label, units, total, status, created_at, rsc_order_number, fail_reason",
-                )
-                .order("created_at", { ascending: false })
-                .limit(200),
-            supabase.from("orders").select("total, status, created_at").gte("created_at", start30.toISOString()),
-            // Saldo RSC dari API supplier — best-effort, jangan sampai satu request
-            // yang gagal (mis. API key belum diisi) bikin seluruh Ringkasan error.
-            rscConfigured
-                ? getRscBalanceUsd().then(
-                    (usd) => ({ usd, error: null as string | null }),
-                    (e) => ({ usd: null as number | null, error: e instanceof RscError ? e.message : "Gagal ambil saldo RSC." }),
-                )
-                : Promise.resolve({ usd: null as number | null, error: null as string | null }),
-        ]);
+    const [{ data: settings }, { count: customerCount }, { data: ordersRaw }, { data: last30 }] = await Promise.all([
+        supabase.from("app_settings").select("usd_idr_rate").eq("id", true).maybeSingle(),
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase
+            .from("orders")
+            .select(
+                "id, order_code, target_username, package_label, units, total, status, created_at, rsc_order_number, fail_reason",
+            )
+            .order("created_at", { ascending: false })
+            .limit(200),
+        supabase.from("orders").select("total, status, created_at").gte("created_at", start30.toISOString()),
+    ]);
 
     const orders: AdminOrderRow[] = (ordersRaw ?? []).map((o) => ({
         id: o.id as string,
@@ -170,9 +173,6 @@ export async function getAdminData(): Promise<AdminData> {
 
     return {
         isAdmin: true,
-        rscBalanceIdr: rscBalanceResult.usd !== null ? Math.round(rscBalanceResult.usd * usdIdrRate) : null,
-        rscConfigured,
-        rscBalanceError: rscBalanceResult.error,
         todayOrders,
         todayOrdersDelta: todayOrders - yesterdayOrders,
         todayRevenue,
@@ -185,6 +185,31 @@ export async function getAdminData(): Promise<AdminData> {
         orders,
         usdIdrRate,
     };
+}
+
+// Saldo yang masih tersisa di akun supplier — dipisah dari getAdminData()
+// dan dipanggil dari komponen server tersendiri yang dibungkus <Suspense>
+// (lihat components/SupplierBalanceCard.tsx). Best-effort: kalau supplier-nya
+// lambat/hang/error, ini gagal sendiri tanpa nge-block bagian lain halaman.
+export async function getRscBalance(usdIdrRate: number): Promise<RscBalanceInfo> {
+    const rscConfigured = !!process.env.RSC_API_KEY;
+    if (!rscConfigured) {
+        return { rscBalanceIdr: null, rscConfigured: false, rscBalanceError: null };
+    }
+
+    try {
+        const usd = await getRscBalanceUsd();
+        return { rscBalanceIdr: Math.round(usd * usdIdrRate), rscConfigured: true, rscBalanceError: null };
+    } catch (e) {
+        // Log pesannya doang (bukan seluruh objek error) — supaya nama/detail
+        // supplier tidak ikut nyangkut di terminal lewat stack trace/nama class.
+        console.error("[admin] gagal ambil saldo supplier:", e instanceof Error ? e.message : e);
+        return {
+            rscBalanceIdr: null,
+            rscConfigured: true,
+            rscBalanceError: e instanceof RscError ? e.message : "Gagal ambil saldo supplier.",
+        };
+    }
 }
 
 export async function updateUsdIdrRateAction(rate: number): Promise<{ error: string | null }> {
@@ -288,10 +313,13 @@ export async function adminCheckRscOrderAction(
     try {
         const rscOrder = await getRscOrderStatus(rscOrderNumber);
         const supabase = await createClient();
+        // fail_reason ini juga kebaca sama PEMBELI di riwayat pesanannya sendiri —
+        // jangan simpan status mentah dari supplier di sini, cukup teks generik.
+        // Status mentahnya tetap ada di kolom rsc_status buat admin cek manual.
         const { error } = await supabase.rpc("admin_update_order_status", {
             p_order_id: orderId,
             p_status: mapRscStatus(rscOrder.status),
-            p_reason: mapRscStatus(rscOrder.status) === "fail" ? `Status RSC: ${rscOrder.status}` : "",
+            p_reason: mapRscStatus(rscOrder.status) === "fail" ? "Pesanan gagal diproses oleh supplier." : "",
         });
         if (error) return { error: "Gagal simpan status. Pastikan akun ini admin." };
         revalidatePath("/admin/pesanan");
@@ -299,7 +327,7 @@ export async function adminCheckRscOrderAction(
         revalidatePath("/dashboard");
         return { error: null };
     } catch (e) {
-        return { error: e instanceof RscError ? e.message : "Gagal ambil status dari RSC." };
+        return { error: e instanceof RscError ? e.message : "Gagal ambil status dari supplier." };
     }
 }
 

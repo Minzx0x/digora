@@ -1,42 +1,32 @@
-// TODO: ganti angka contoh dengan data asli Digora.
-const STATS = [
-  {
-    value: "10rb+",
-    label: "Stars terkirim",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-        <rect x="1" y="3" width="12" height="12" rx="3.5" fill="#c9c9d0" />
-        <circle cx="12.5" cy="3.5" r="3" fill="#e5484d" />
-      </svg>
-    ),
-  },
-  {
-    value: "24/7",
-    label: "Layanan otomatis",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-        <rect x="1" y="5" width="14" height="10" rx="3.5" fill="#c9c9d0" />
-        <rect x="4.5" y="1" width="7" height="6" rx="2.5" fill="#f5b83a" />
-      </svg>
-    ),
-  },
-];
+import type { CSSProperties } from "react";
+import { Plane, StarCoin, GiftCoin, Blobs, RpCoin } from "./Coins";
 
-export default function Stats() {
+const abs: CSSProperties = { position: "absolute" };
+
+function Dot({ left, top, size }: { left: number; top: number; size: number }) {
   return (
-    <div style={{ display: "flex", alignItems: "stretch", gap: 28 }}>
-      {STATS.map((s, i) => (
-        <div key={s.label} style={{ display: "flex", alignItems: "stretch", gap: 28 }}>
-          {i > 0 && <div style={{ width: 2, background: "#1a1a1f" }} />}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {s.icon}
-            <div style={{ fontSize: 38, fontWeight: 600, letterSpacing: "-0.035em", color: "#0b0b0c" }}>
-              {s.value}
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 500, color: "#74747d" }}>{s.label}</div>
-          </div>
-        </div>
-      ))}
-    </div>
+    <div
+      style={{ ...abs, left, top, width: size, height: size, borderRadius: "50%", background: "#1b2fe0" }}
+    />
+  );
+}
+
+// Cuma sisain objek yang beneran nyambung ke produk (biar gak berisik & gak
+// ngalihin fokus dari headline): StarCoin = Stars, Plane = logo Telegram,
+// GiftCoin = "kirim ke teman" (sesuai copy), RpCoin = harga/pembayaran.
+// BoltCoin, YellowRing, Torus, dan sebagian Dot dihapus karena gak ada makna
+// jelas ke produk, cuma nambah keramaian visual.
+/** Floating 3D objects around the phone. Coordinates are in the 700x826 scene space. */
+export default function Objects() {
+  return (
+    <>
+      <Plane className="float" style={{ ...abs, left: 440, top: 90, animationDelay: "-3s" }} />
+      <Dot left={392} top={76} size={11} />
+      <Dot left={712} top={100} size={5} />
+      <StarCoin className="float-slow" style={{ ...abs, left: 336, top: 226 }} />
+      <GiftCoin className="float" style={{ ...abs, left: 546, top: 226, animationDelay: "-2s" }} />
+      <Blobs style={{ ...abs, left: 474, top: 398 }} />
+      <RpCoin className="float-slow" style={{ ...abs, left: 398, top: 540, animationDelay: "-2s" }} />
+    </>
   );
 }

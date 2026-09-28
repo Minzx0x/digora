@@ -22,23 +22,42 @@ class RscError extends Error {
     }
 }
 
+// Batas waktu tunggu RSC sebelum kita nyerah duluan. Server RSC kadang lambat/hang
+// (pernah kejadian balas 502) — tanpa batas ini, satu request yang macet bisa
+// nge-block seluruh halaman admin yang nunggu Promise.all selesai (mis. Ringkasan).
+const RSC_TIMEOUT_MS = 8000;
+
 async function rscRequest(path: string, init?: RequestInit): Promise<unknown> {
     const apiKey = process.env.RSC_API_KEY;
     if (!apiKey) {
         throw new RscError("RSC_API_KEY belum diisi di .env.local server.");
     }
 
-    const res = await fetch(`${RSC_BASE_URL}${path}`, {
-        ...init,
-        headers: {
-            Authorization: `Bearer ${apiKey}`,
-            Accept: "application/json",
-            ...(init?.body ? { "Content-Type": "application/json" } : {}),
-            ...init?.headers,
-        },
-        // Data harga & status order supplier bisa berubah — jangan pernah dicache Next.js.
-        cache: "no-store",
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), RSC_TIMEOUT_MS);
+
+    let res: Response;
+    try {
+        res = await fetch(`${RSC_BASE_URL}${path}`, {
+            ...init,
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                Accept: "application/json",
+                ...(init?.body ? { "Content-Type": "application/json" } : {}),
+                ...init?.headers,
+            },
+            // Data harga & status order supplier bisa berubah — jangan pernah dicache Next.js.
+            cache: "no-store",
+            signal: controller.signal,
+        });
+    } catch (e) {
+        if (e instanceof Error && e.name === "AbortError") {
+            throw new RscError(`Layanan supplier tidak balas dalam ${RSC_TIMEOUT_MS / 1000} detik (timeout).`);
+        }
+        throw e;
+    } finally {
+        clearTimeout(timer);
+    }
 
     const text = await res.text();
     let json: unknown = null;
@@ -49,7 +68,7 @@ async function rscRequest(path: string, init?: RequestInit): Promise<unknown> {
     }
 
     if (!res.ok) {
-        const msg = extractErrorMessage(json) ?? `RSC API ${path} balas status ${res.status}`;
+        const msg = extractErrorMessage(json) ?? `Layanan supplier balas status ${res.status}`;
         throw new RscError(msg, res.status, json);
     }
     return json;
@@ -80,7 +99,7 @@ export async function getRscStarsRateUsd(): Promise<number> {
     if (rate === null) {
         console.error("[rsc] GET /telegram/stars balas format yang tidak dikenali:", JSON.stringify(json));
         throw new RscError(
-            "Format respons GET /telegram/stars dari RSC tidak dikenali — cek console server untuk detail mentahnya.",
+            "Format respons harga Stars dari supplier tidak dikenali — cek console server untuk detail mentahnya.",
             undefined,
             json,
         );
@@ -95,7 +114,7 @@ export async function getRscPremiumRatesUsd(): Promise<Record<number, number>> {
     if (!rates || Object.keys(rates).length === 0) {
         console.error("[rsc] GET /telegram/premium balas format yang tidak dikenali:", JSON.stringify(json));
         throw new RscError(
-            "Format respons GET /telegram/premium dari RSC tidak dikenali — cek console server untuk detail mentahnya.",
+            "Format respons harga Premium dari supplier tidak dikenali — cek console server untuk detail mentahnya.",
             undefined,
             json,
         );
@@ -183,7 +202,7 @@ export async function getRscBalanceUsd(): Promise<number> {
     if (balance === null) {
         console.error("[rsc] GET /me balas format yang tidak dikenali:", JSON.stringify(json));
         throw new RscError(
-            "Format respons GET /me dari RSC tidak dikenali — cek console server untuk detail mentahnya.",
+            "Format respons saldo dari supplier tidak dikenali — cek console server untuk detail mentahnya.",
             undefined,
             json,
         );
@@ -218,7 +237,7 @@ function parseRscOrder(json: unknown): RscOrder {
     const number = toNum(obj.number) ?? toNum(obj.id);
     const status = typeof obj.status === "string" ? obj.status : "processing";
     if (number === null) {
-        throw new RscError("Respons order RSC tidak berisi nomor order yang valid.", undefined, json);
+        throw new RscError("Respons order dari supplier tidak berisi nomor order yang valid.", undefined, json);
     }
     return { number, status };
 }

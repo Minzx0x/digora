@@ -122,7 +122,7 @@ export default function Hero() {
             </h1>
             <p
               style={{
-                margin: "30px 0 0",
+                margin: "22px 0 0",
                 width: 350,
                 fontSize: 16,
                 lineHeight: 1.6,
@@ -133,7 +133,7 @@ export default function Hero() {
               {DESC}
             </p>
           </div>
-          <div style={{ position: "absolute", left: textLeft, top: 664 }}>
+          <div style={{ position: "absolute", left: textLeft, top: 604 }}>
             <Stats />
           </div>
         </div>
