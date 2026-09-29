@@ -171,6 +171,7 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
                                     <th>Order</th>
                                     <th>Username</th>
                                     <th>Paket</th>
+                                    <th>Jumlah</th>
                                     <th>Total</th>
                                     <th>Status</th>
                                     <th>Waktu</th>
@@ -191,6 +192,12 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
                                             )}
                                         </td>
                                         <td>{o.packageLabel}</td>
+                                        <td>
+                                            {o.units.toLocaleString("id-ID")}
+                                            {o.units > 0 && (
+                                                <div className="mute d-mute-xs">@{rp(Math.round(o.total / o.units))}</div>
+                                            )}
+                                        </td>
                                         <td>{rp(o.total)}</td>
                                         <td>
                                             <span className={`d-badge ${o.status}`}>{STATUS_LABEL[o.status]}</span>
@@ -205,7 +212,9 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
                                                 )
                                             )}
                                         </td>
-                                        <td className="mute">{timeAgo(o.time)}</td>
+                                        <td className="mute" title={new Date(o.time).toLocaleString("id-ID")}>
+                                            {timeAgo(o.time)}
+                                        </td>
                                         <td>
                                             <div className="d-order-actions">
                                                 {o.provider === "smmflare" && o.providerOrderId !== null && (

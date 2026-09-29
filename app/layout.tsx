@@ -6,9 +6,9 @@ import "@fontsource/hanken-grotesk/800.css";
 import "./globals.css";
 import "./sections.css";
 
-const TITLE = "Digora — Telegram Stars, Premium & SMM Panel";
+const TITLE = "Digora — Telegram Stars & SMM Panel Termurah";
 const DESCRIPTION =
-  "Beli Telegram Stars & Premium, atau pesan layanan SMM Panel (followers, likes, views) untuk Instagram, TikTok, YouTube, dan lainnya. Proses otomatis 24 jam.";
+  "Top up Telegram Stars/Premium & SMM Panel (followers, likes, views) untuk IG, TikTok, YouTube — harga termurah, proses otomatis 24 jam, langsung masuk.";
 
 export const metadata: Metadata = {
   // Dibutuhkan Next.js buat nge-resolve URL gambar OG (app/opengraph-image.tsx)

@@ -227,6 +227,89 @@ export function GiftCoin({ style, className, scale = 1 }: P) {
     );
 }
 
+export function HeartCoin({ style, className, scale = 1 }: P) {
+    return (
+        <svg
+            style={{ transform: "rotate(8deg)", filter: "drop-shadow(0 20px 18px rgba(10,20,90,0.32))", ...style }}
+            width={156 * scale}
+            height={178 * scale}
+            viewBox="0 0 156 178"
+            className={className}
+            aria-hidden="true"
+        >
+            <defs>
+                <linearGradient id="hS" gradientUnits="userSpaceOnUse" x1="12" y1="0" x2="140" y2="0">
+                    <stop offset="0" stopColor="#7a2140" />
+                    <stop offset="0.35" stopColor="#d5688f" />
+                    <stop offset="1" stopColor="#5c1733" />
+                </linearGradient>
+                <radialGradient id="hT" cx="32%" cy="24%" r="92%">
+                    <stop offset="0" stopColor="#ffe1ea" />
+                    <stop offset="0.5" stopColor="#f0a0bc" />
+                    <stop offset="1" stopColor="#c46e8f" />
+                </radialGradient>
+                <radialGradient id="hM" cx="36%" cy="26%" r="88%">
+                    <stop offset="0" stopColor="#ffd7e2" />
+                    <stop offset="0.5" stopColor="#ee5c86" />
+                    <stop offset="1" stopColor="#7a1a3e" />
+                </radialGradient>
+                <linearGradient id="hBl" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stopColor="#ffe680" />
+                    <stop offset="1" stopColor="#f0a000" />
+                </linearGradient>
+                <linearGradient id="hG" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stopColor="#ff8aa3" />
+                    <stop offset="1" stopColor="#ee2b5c" />
+                </linearGradient>
+                <filter id="hF" x="-30%" y="-30%" width="160%" height="170%">
+                    <feDropShadow dx="0" dy="3" stdDeviation="2.5" floodColor="#000000" floodOpacity="0.4" />
+                </filter>
+            </defs>
+            <ellipse cx="76" cy="94" rx="64" ry="68" fill="url(#hS)" />
+            <rect x="12" y="78" width="128" height="16" fill="url(#hS)" />
+            <ellipse cx="76" cy="78" rx="64" ry="68" fill="url(#hT)" />
+            <ellipse cx="76" cy="78" rx="57" ry="61" fill="none" stroke="#ffffff" strokeOpacity="0.5" strokeWidth="2.5" />
+
+            <g>
+                <circle cx="44" cy="40" r="3" fill="#ffc21f" />
+                <circle cx="108" cy="40" r="3" fill="#ff8aa3" />
+                <circle cx="30" cy="78" r="3.5" fill="#e4483c" />
+                <circle cx="122" cy="78" r="3" fill="#ffc21f" />
+                <circle cx="40" cy="116" r="3" fill="#ff8aa3" />
+                <circle cx="112" cy="116" r="3.5" fill="#e4483c" />
+                <circle cx="58" cy="128" r="2.5" fill="#09090c" />
+                <circle cx="94" cy="128" r="2.5" fill="#ffc21f" />
+                <rect x="48" y="48" width="7" height="3.5" rx="1.5" fill="#ffc21f" transform="rotate(30 48 48)" />
+                <rect x="98" y="104" width="7" height="3.5" rx="1.5" fill="#e4483c" transform="rotate(-40 98 104)" />
+            </g>
+
+            <ellipse cx="76" cy="80" rx="40" ry="44" fill="#4a1128" />
+            <ellipse cx="76" cy="78" rx="40" ry="44" fill="url(#hM)" stroke="url(#hBl)" strokeWidth="7" />
+            <ellipse cx="76" cy="78" rx="44" ry="48" fill="none" stroke="#ffe9a0" strokeOpacity="0.6" strokeWidth="1.5" />
+
+            <g filter="url(#hF)">
+                <path
+                    d="M76 99 C49 81 44.5 58.5 59.5 49.5 C68.5 44.25 76 49.5 76 58.5 C76 49.5 83.5 44.25 92.5 49.5 C107.5 58.5 103 81 76 99 Z"
+                    fill="url(#hG)"
+                    stroke="#ffffff"
+                    strokeWidth="2.5"
+                    strokeLinejoin="round"
+                />
+                <path
+                    d="M64 52.5 C58 55.5 55 63 59.5 70.5"
+                    fill="none"
+                    stroke="#ffffff"
+                    strokeOpacity="0.8"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                />
+            </g>
+
+            <path d="M26 44 C40 20 80 10 108 20" fill="none" stroke="#ffffff" strokeOpacity="0.65" strokeWidth="5" strokeLinecap="round" />
+        </svg>
+    );
+}
+
 export function Blobs({ style, className, scale = 1 }: P) {
     return (
         <svg style={{ ...style }} width={176 * scale} height={150 * scale} viewBox="0 0 176 150" className={className}
