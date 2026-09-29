@@ -17,8 +17,8 @@ export default function Footer() {
                 <nav className="foot-cols" aria-label="Footer">
                     <div>
                         <h3>Produk</h3>
-                        <a href="#produk">Paket Stars</a>
                         <a href="#smm">SMM Panel</a>
+                        <a href="#produk">Paket Stars</a>
                         <a href="#produk">Kirim ke teman</a>
                         <a href="#harga">Harga</a>
                     </div>

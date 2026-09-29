@@ -21,8 +21,8 @@ export default function Home() {
 
       <FitWidth>
         <div className="stack">
-          <Products />
           <SmmProducts />
+          <Products />
           <HowItWorks />
           <Benefits />
           <Faq />

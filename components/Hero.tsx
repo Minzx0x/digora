@@ -9,7 +9,7 @@ import Stats from "./Stats";
 
 const TITLE = (
   <>
-    Telegram &amp; SMM Panel
+    Telegram &amp; SMM,
     <br />
     murah, cepat,
     <br />

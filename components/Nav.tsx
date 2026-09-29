@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const ITEMS = [
-  { href: "#produk", label: "Paket", id: "produk" },
+  { href: "#smm", label: "SMM Panel", id: "smm" },
+  { href: "#produk", label: "Paket Stars", id: "produk" },
   { href: "#harga", label: "Harga", id: "harga" },
   { href: "#bantuan", label: "Bantuan", id: "bantuan" },
   { href: "/daftar", label: "Daftar", id: "" },

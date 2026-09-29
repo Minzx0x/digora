@@ -6,6 +6,7 @@ import Link from "next/link";
 import { buyOrderAction } from "@/lib/actions/data";
 import { checkUsernameFormat } from "@/lib/telegram";
 import type { PackageRow } from "@/lib/actions/catalog";
+import Toast from "./Toast";
 
 type Kind = "stars" | "premium";
 
@@ -49,6 +50,7 @@ export default function StarsView({ catalog, saldo }: { catalog: PackageRow[]; s
     const [err, setErr] = useState("");
     const [buying, setBuying] = useState(false);
     const [tg, setTg] = useState<{ state: "idle" | "checking" | "ok" | "bad" | "unknown"; msg: string }>({ state: "idle", msg: "" });
+    const [done, setDone] = useState<string | null>(null);
 
     // validasi username: format langsung, lalu cek ke Telegram (ditunda 600 ms setelah berhenti mengetik)
     useEffect(() => {
@@ -145,18 +147,22 @@ export default function StarsView({ catalog, saldo }: { catalog: PackageRow[]; s
             setErr(res.error);
             return;
         }
-        // Redirect ke Pesanan Saya alih-alih nampilin pesan sukses inline —
-        // sama alasan kayak SmmView.tsx: pesan inline gampang ke-lewat, di
-        // Pesanan Saya order barunya jelas kelihatan sebagai baris paling atas.
-        router.push("/dashboard/riwayat");
+        // Toast ngambang di atas viewport, BUKAN redirect — tetap di halaman
+        // ini (bisa langsung pesan lagi), notifikasinya tetap kelihatan
+        // berapa pun posisi scroll-nya.
+        setDone(`Pesanan ${res.orderCode ?? ""} dibayar dengan saldo. ${pack.label} sedang dikirim ke @${u}.`);
+        setTo("");
+        setTg({ state: "idle", msg: "" });
         router.refresh();
     }
 
     return (
-        <section className="d-card">
-            <div className="d-card-head">
-                <h2>Beli Telegram Stars &amp; Premium</h2>
-            </div>
+        <>
+            {done && <Toast message={done} onDone={() => setDone(null)} />}
+            <section className="d-card">
+                <div className="d-card-head">
+                    <h2>Beli Telegram Stars &amp; Premium</h2>
+                </div>
 
             <form className="u-form" onSubmit={submit} noValidate>
                 <div>
@@ -324,6 +330,7 @@ export default function StarsView({ catalog, saldo }: { catalog: PackageRow[]; s
                     </div>
                 </div>
             </form>
-        </section>
+            </section>
+        </>
     );
 }

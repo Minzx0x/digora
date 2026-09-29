@@ -22,6 +22,7 @@ import {
 } from "react-icons/fa6";
 import { buySmmOrderAction, getSmmServiceEtaAction, type SmmServiceRow } from "@/lib/actions/smm";
 import { translateServiceName } from "@/lib/smm-translate";
+import Toast from "./Toast";
 
 const rp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 const num = (n: number) => n.toLocaleString("id-ID");
@@ -271,6 +272,7 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
     const [quantity, setQuantity] = useState("");
     const [err, setErr] = useState("");
     const [buying, setBuying] = useState(false);
+    const [done, setDone] = useState<string | null>(null);
 
     function pickPlatform(key: string) {
         setPlatform(key);
@@ -334,11 +336,12 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
             setErr(res.error);
             return;
         }
-        // Redirect ke Pesanan Saya alih-alih nampilin pesan sukses inline di
-        // halaman ini — pesan inline gampang ke-lewat kalau posisi scroll-nya
-        // nggak pas, sedangkan di Pesanan Saya order barunya jelas kelihatan
-        // sebagai baris paling atas.
-        router.push("/dashboard/riwayat");
+        // Toast ngambang di atas viewport, BUKAN redirect — biar tetap di
+        // halaman ini (bisa langsung pesan lagi kalau mau) tapi notifikasinya
+        // tetap kelihatan berapa pun posisi scroll-nya.
+        setDone(`Pesanan ${res.orderCode ?? ""} dibayar dengan saldo. Sedang diproses.`);
+        setLink("");
+        setQuantity("");
         router.refresh();
     }
 
@@ -354,10 +357,12 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
     }
 
     return (
-        <section className="d-card">
-            <div className="d-card-head">
-                <h2>SMM Panel — Followers, Likes &amp; Views</h2>
-            </div>
+        <>
+            {done && <Toast message={done} onDone={() => setDone(null)} />}
+            <section className="d-card">
+                <div className="d-card-head">
+                    <h2>SMM Panel — Followers, Likes &amp; Views</h2>
+                </div>
 
             <form className="u-form" onSubmit={submit} noValidate>
                 <div>
@@ -611,6 +616,7 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
                     </div>
                 </div>
             </form>
-        </section>
+            </section>
+        </>
     );
 }
