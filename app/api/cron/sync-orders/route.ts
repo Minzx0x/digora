@@ -42,15 +42,22 @@ export async function GET(req: NextRequest) {
     let checked = 0;
     let updated = 0;
     let failed = 0;
+    // Query select order yang mau dicek TIDAK PERNAH dicek error-nya sebelum
+    // ini -- kalau select-nya sendiri gagal (mis. masalah izin), data-nya
+    // cuma jadi null lalu ke-skip diam-diam via "?? []", hasilnya
+    // checked:0 padahal ada order yang harusnya kecek. Dicatat di sini biar
+    // kelihatan di respons JSON (cron-job.org nampilin body respons-nya).
+    const queryErrors: { rsc?: string; smm?: string } = {};
 
     // ---- Order Telegram Stars/Premium yang masih "Diproses" (RSC) ----
-    const { data: rscOrders } = await supabase
+    const { data: rscOrders, error: rscQueryError } = await supabase
         .from("orders")
         .select("id, rsc_order_number")
         .in("kind", ["stars", "premium"])
         .eq("status", "proc")
         .not("rsc_order_number", "is", null)
         .limit(BATCH_LIMIT);
+    if (rscQueryError) queryErrors.rsc = rscQueryError.message;
 
     for (const o of rscOrders ?? []) {
         checked++;
@@ -72,13 +79,14 @@ export async function GET(req: NextRequest) {
     }
 
     // ---- Order SMM Panel yang masih "Diproses" (smmflare) ----
-    const { data: smmOrders } = await supabase
+    const { data: smmOrders, error: smmQueryError } = await supabase
         .from("orders")
         .select("id, provider_order_id")
         .eq("provider", "smmflare")
         .eq("status", "proc")
         .not("provider_order_id", "is", null)
         .limit(BATCH_LIMIT);
+    if (smmQueryError) queryErrors.smm = smmQueryError.message;
 
     for (const o of smmOrders ?? []) {
         checked++;
@@ -99,5 +107,10 @@ export async function GET(req: NextRequest) {
         }
     }
 
-    return NextResponse.json({ checked, updated, failed });
+    return NextResponse.json({
+        checked,
+        updated,
+        failed,
+        ...(Object.keys(queryErrors).length > 0 ? { queryErrors } : {}),
+    });
 }
