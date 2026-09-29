@@ -33,6 +33,30 @@ export async function getSmmServiceEtaAction(serviceId: string): Promise<SmmServ
     return { avgMinutes, sampleSize };
 }
 
+// Versi banyak sekaligus buat kolom "Estimasi" di /dashboard/daftar-layanan
+// (bisa nampilin puluhan layanan sekaligus per halaman) — 1 query RPC, bukan
+// manggil getSmmServiceEtaAction() satu-satu per baris. Layanan yang belum
+// punya riwayat pesanan selesai TIDAK ikut balik dari RPC-nya, jadi di sini
+// dilengkapi jadi {avgMinutes:null, sampleSize:0} biar tiap serviceId yang
+// diminta selalu ada entrinya.
+export async function getSmmServicesEtaAction(serviceIds: string[]): Promise<Record<string, SmmServiceEta>> {
+    const out: Record<string, SmmServiceEta> = {};
+    for (const id of serviceIds) out[id] = { avgMinutes: null, sampleSize: 0 };
+    if (serviceIds.length === 0) return out;
+
+    const supabase = await createClient();
+    const { data } = await supabase.rpc("get_smm_services_eta", { p_service_ids: serviceIds });
+    for (const row of data ?? []) {
+        const id = row.service_id as string;
+        const sampleSize = Number(row.sample_size ?? 0);
+        out[id] = {
+            sampleSize,
+            avgMinutes: sampleSize > 0 && row.avg_minutes !== null && row.avg_minutes !== undefined ? Number(row.avg_minutes) : null,
+        };
+    }
+    return out;
+}
+
 // Katalog SMM yang sudah dikurasi admin (lihat components/AdminSmmCatalog.tsx) —
 // cuma yang active:true yang kelihatan di halaman beli. Tidak butuh login untuk
 // baca (RLS: smm_services_select_all for select using (true), sama pola dengan

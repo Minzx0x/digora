@@ -2321,15 +2321,53 @@
 
 /* .d-pill defaultnya didesain buat di atas background gelap/gradient (kartu
    saldo, kotak sync RSC, dst) — teks & background-nya putih/transparan. Di
-   dalam tabel manapun (baris putih polos, mis. Pesanan & Pelanggan) itu bikin
-   tombolnya nyaris tak kelihatan, jadi di-override kontrasnya khusus di sini. */
-.d-table .d-pill {
+   dalam tabel/pager manapun (baris putih polos, mis. Pesanan & Pelanggan &
+   Daftar Layanan) itu bikin tombolnya nyaris tak kelihatan, jadi di-override
+   kontrasnya khusus di sini. */
+.d-table .d-pill,
+.u-pager .d-pill {
     background: var(--d-surface-2);
     color: var(--d-text);
 }
 
-.d-table .d-pill:hover:not(:disabled) {
+.d-table .d-pill:hover:not(:disabled),
+.u-pager .d-pill:hover:not(:disabled) {
     background: var(--d-divider);
+}
+
+/* Daftar Layanan SMM — filter (cari + platform) & pager di bawah tabel */
+.u-list-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.u-list-filters .u-input {
+    flex: 1;
+    min-width: 200px;
+}
+
+.u-list-platform {
+    width: auto;
+    min-width: 180px;
+}
+
+.u-list-link {
+    color: var(--d-text);
+    font-weight: 600;
+}
+
+.u-list-link:hover {
+    color: #2540ff;
+}
+
+.u-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
 }
 
 /* form inline "Ubah saldo" di baris tabel Pelanggan */

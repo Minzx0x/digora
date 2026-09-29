@@ -1,11 +1,7 @@
 import DashboardSidebar from "@/components/DashboardSidebar";
 import BantuanView from "@/components/BantuanView";
-import TiketView from "@/components/TiketView";
-import { getMyTicketsAction } from "@/lib/actions/tickets";
 
-export default async function BantuanPage() {
-    const tickets = await getMyTicketsAction();
-
+export default function BantuanPage() {
     return (
         <div className="dash">
             <DashboardSidebar active="bantuan" />
@@ -17,7 +13,6 @@ export default async function BantuanPage() {
                     </div>
                 </header>
                 <BantuanView />
-                <TiketView tickets={tickets} />
             </main>
         </div>
     );

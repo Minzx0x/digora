@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
 import {
@@ -13,6 +13,7 @@ import {
     type SmmAdminServiceRow,
 } from "@/lib/actions/admin-smm";
 import type { SmmflareService } from "@/lib/smmflare";
+import { translateServiceName } from "@/lib/smm-translate";
 
 const rp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 const num = (n: number) => n.toLocaleString("id-ID");
@@ -21,7 +22,7 @@ const num = (n: number) => n.toLocaleString("id-ID");
 // nggak pernah di-sync massal, admin cari & tambah satu-satu). Daftar pesanan
 // SMM SENGAJA tidak diulang di sini — sudah otomatis kegabung di /admin/pesanan
 // karena order SMM numpang di tabel orders yang sama dengan Telegram.
-export default function AdminSmmCatalog({ services, balanceSlot }: { services: SmmAdminServiceRow[]; balanceSlot: ReactNode }) {
+export default function AdminSmmCatalog({ services }: { services: SmmAdminServiceRow[] }) {
     const router = useRouter();
     const [q, setQ] = useState("");
     const [searching, setSearching] = useState(false);
@@ -201,7 +202,6 @@ export default function AdminSmmCatalog({ services, balanceSlot }: { services: S
                         <h1 className="d-hi">SMM Panel</h1>
                         <p className="d-sub">Cari & kurasi layanan dari smmflare, atur markup, aktifkan yang mau dijual.</p>
                     </div>
-                    <div className="d-actions">{balanceSlot}</div>
                 </header>
 
                 <section className="d-card">
@@ -255,8 +255,8 @@ export default function AdminSmmCatalog({ services, balanceSlot }: { services: S
                                 <tbody>
                                     {results.map((s) => (
                                         <tr key={s.serviceId}>
-                                            <td>{s.name}</td>
-                                            <td className="mute">{s.category}</td>
+                                            <td>{translateServiceName(s.name)}</td>
+                                            <td className="mute">{translateServiceName(s.category)}</td>
                                             <td>${s.rateUsd.toFixed(3)}</td>
                                             <td className="mute">
                                                 {num(s.min)}–{num(s.max)}
@@ -327,10 +327,10 @@ export default function AdminSmmCatalog({ services, balanceSlot }: { services: S
                         <div className="d-pack" key={s.id}>
                             <div className="d-pack-info">
                                 <div className="d-pack-name">
-                                    {s.name} {!s.active && <span className="d-pack-note">(nonaktif)</span>}
+                                    {translateServiceName(s.name)} {!s.active && <span className="d-pack-note">(nonaktif)</span>}
                                 </div>
                                 <div className="d-pack-note">
-                                    {s.category} · {num(s.minQuantity)}–{num(s.maxQuantity)}
+                                    {translateServiceName(s.category)} · {num(s.minQuantity)}–{num(s.maxQuantity)}
                                 </div>
                             </div>
                             <div className="d-pack-fields">

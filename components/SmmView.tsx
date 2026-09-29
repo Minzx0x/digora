@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { IconType } from "react-icons";
 import {
@@ -21,6 +21,7 @@ import {
     FaWallet,
 } from "react-icons/fa6";
 import { buySmmOrderAction, getSmmServiceEtaAction, type SmmServiceRow } from "@/lib/actions/smm";
+import { translateServiceName } from "@/lib/smm-translate";
 
 const rp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 const num = (n: number) => n.toLocaleString("id-ID");
@@ -43,48 +44,6 @@ const PLATFORMS: { key: string; label: string; icon: IconType; color: string; ma
     { key: "traffic", label: "Trafik Website", icon: FaGlobe, color: "#2540ff", match: ["website traffic", "web traffic"] },
     { key: "seo", label: "Backlink SEO", icon: FaLink, color: "#2540ff", match: ["seo", "backlink"] },
 ];
-
-// Nama layanan mentah dari smmflare ada ribuan variasi teks unik dalam
-// bahasa Inggris — nggak realistis diterjemahkan satu-satu dengan akurat.
-// Ini kamus istilah yang PALING SERING BERULANG di nama-nama itu (High
-// Quality, Non Drop, Instant Start, Days Refill, dst) diganti otomatis ke
-// Indonesia. Dicek frasa panjang dulu baru kata tunggal, biar urutan kata
-// hasil translate tetap masuk akal ("High Quality" -> "Kualitas Tinggi",
-// bukan asal tukar kata per kata).
-const TRANSLATE_DICT: [RegExp, string][] = [
-    [/high quality/gi, "Kualitas Tinggi"],
-    [/premium quality/gi, "Kualitas Premium"],
-    [/low drop/gi, "Drop Rendah"],
-    [/non ?drop/gi, "Tanpa Drop"],
-    [/no drop/gi, "Tanpa Drop"],
-    [/instant start/gi, "Mulai Instan"],
-    [/lifetime refill/gi, "Garansi Seumur Hidup"],
-    [/(\d+) days? refill/gi, "Garansi $1 Hari"],
-    [/no refill/gi, "Tanpa Garansi"],
-    [/auto refill/gi, "Garansi Otomatis"],
-    [/live stream viewers/gi, "Penonton Live Stream"],
-    [/old accounts?/gi, "Akun Lama"],
-    [/hq accounts?/gi, "Akun HQ"],
-    [/real ?[- ]?mixed/gi, "Real Campuran"],
-    [/max (\d)/gi, "Maks $1"],
-    [/cheapest/gi, "Termurah"],
-    [/worldwide/gi, "Seluruh Dunia"],
-    [/fast[- ]?after[- ]?update/gi, "Cepat Setelah Update"],
-    [/speed/gi, "Kecepatan"],
-    [/instant/gi, "Instan"],
-    [/refill/gi, "Garansi"],
-    [/minutes?/gi, "Menit"],
-    [/hours?/gi, "Jam"],
-    [/days?/gi, "Hari"],
-];
-
-function translateServiceName(name: string): string {
-    let out = name;
-    for (const [pattern, replacement] of TRANSLATE_DICT) {
-        out = out.replace(pattern, replacement);
-    }
-    return out;
-}
 
 // Nama layanan mentah biasanya format "X | Y | Z" (mis. "TikTok Views | High
 // Quality | Fast | Instant Start") — dipecah jadi poin-poin terjemahan biar
@@ -190,6 +149,15 @@ const LINK_EXAMPLE: Record<string, string> = {
 
 export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; saldo: number }) {
     const router = useRouter();
+    // Datang dari /dashboard/daftar-layanan (klik satu layanan di tabel) —
+    // langsung ke-pilih di sini, bukan cuma serviceId-nya doang, platform &
+    // kategori juga ikut disetel biar combobox-nya konsisten nampilin pilihan
+    // yang sama (bukan nyangkut di filter "Semua" yang nggak match).
+    const searchParams = useSearchParams();
+    const deepLinkService = useMemo(() => {
+        const id = searchParams.get("service");
+        return id ? (catalog.find((s) => s.id === id) ?? null) : null;
+    }, [searchParams, catalog]);
 
     // Tingkat 1: Platform (ikon brand asli, dideteksi dari nama+kategori).
     const withPlatform = useMemo(() => catalog.map((s) => ({ ...s, platform: detectPlatform(s) })), [catalog]);
@@ -201,7 +169,7 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
             : known;
     }, [withPlatform]);
 
-    const [platform, setPlatform] = useState("all");
+    const [platform, setPlatform] = useState(() => (deepLinkService ? detectPlatform(deepLinkService) : "all"));
     const servicesInPlatform = useMemo(
         () => (platform === "all" ? withPlatform : withPlatform.filter((s) => s.platform === platform)),
         [withPlatform, platform],
@@ -234,7 +202,7 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
         return map;
     }, [distinctCategories, servicesInPlatform]);
 
-    const [rawCategory, setRawCategory] = useState(""); // "" = Semua
+    const [rawCategory, setRawCategory] = useState(() => deepLinkService?.category ?? ""); // "" = Semua
     const servicesInCategory = useMemo(
         () => (rawCategory === "" ? servicesInPlatform : servicesInPlatform.filter((s) => s.category === rawCategory)),
         [servicesInPlatform, rawCategory],
@@ -249,7 +217,7 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
         return distinctCategories.filter((c) => c.toLowerCase().includes(q));
     }, [distinctCategories, categoryQuery]);
 
-    const [serviceId, setServiceId] = useState(servicesInCategory[0]?.id ?? "");
+    const [serviceId, setServiceId] = useState(() => deepLinkService?.id ?? servicesInCategory[0]?.id ?? "");
     const service = catalog.find((s) => s.id === serviceId) ?? null;
     const linkExample = service ? (LINK_EXAMPLE[detectPlatform(service)] ?? LINK_EXAMPLE.lainnya) : LINK_EXAMPLE.lainnya;
 
