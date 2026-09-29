@@ -6,10 +6,29 @@ import "@fontsource/hanken-grotesk/800.css";
 import "./globals.css";
 import "./sections.css";
 
+const TITLE = "Digora — Telegram Stars, Premium & SMM Panel";
+const DESCRIPTION =
+  "Beli Telegram Stars & Premium, atau pesan layanan SMM Panel (followers, likes, views) untuk Instagram, TikTok, YouTube, dan lainnya. Proses otomatis 24 jam.";
+
 export const metadata: Metadata = {
-  title: "Digora — Telegram Stars, Premium & SMM Panel",
-  description:
-    "Beli Telegram Stars & Premium, atau pesan layanan SMM Panel (followers, likes, views) untuk Instagram, TikTok, YouTube, dan lainnya. Proses otomatis 24 jam.",
+  // Dibutuhkan Next.js buat nge-resolve URL gambar OG (app/opengraph-image.tsx)
+  // jadi URL absolut yang bener pas di-share — tanpa ini linknya relatif dan
+  // nggak kebaca sama WhatsApp/Telegram pas nampilin preview.
+  metadataBase: new URL("https://www.digora.codes"),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    siteName: "Digora",
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 // maximumScale + userScalable:false ngunci pinch-zoom & double-tap-zoom di

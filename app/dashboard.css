@@ -913,6 +913,14 @@
         height: 16px;
     }
 
+    /* Tombol tutup drawer (.d-side-close) posisinya absolute, ngambang di
+       pojok kanan-atas .d-side -- ThemeToggle yang sekarang nempel di
+       .d-brand ada di jalur yang sama, jadi ketiban/numpuk kalau nggak
+       dikasih jarak. */
+    .d-brand {
+        padding-right: 44px;
+    }
+
     .d-main {
         padding: 20px 16px 28px;
     }
@@ -2588,6 +2596,10 @@
 
 .tk-reply input {
     flex: 1;
+    /* min-width default flex item itu "auto" (bukan 0) -- tanpa ini inputnya
+       nolak nyusut di layar sempit, malah bikin tombol Kirim ke-dorong
+       mepet/kepotong di tepi layar HP. */
+    min-width: 0;
     padding: 13px 16px;
     border: 1.5px solid transparent;
     border-radius: 16px;
@@ -2601,6 +2613,10 @@
     outline: none;
     border-color: #2540ff;
     background: var(--d-card-bg);
+}
+
+.tk-reply .d-btn {
+    flex-shrink: 0;
 }
 
 .tk-attach-btn {

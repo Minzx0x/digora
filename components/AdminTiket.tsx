@@ -192,7 +192,7 @@ export default function AdminTiket({ tickets: initialTickets }: { tickets: Admin
                             {file && (
                                 <div className="tk-attach-preview">
                                     <span>📷 {file.name}</span>
-                                    <button type="button" onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}>
+                                    <button type="button" aria-label="Hapus lampiran" onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}>
                                         ✕
                                     </button>
                                 </div>

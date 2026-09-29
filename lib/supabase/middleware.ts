@@ -32,9 +32,18 @@ export async function updateSession(request: NextRequest) {
         },
     });
 
+    // Pengunjung anonim (belum pernah login) sama sekali nggak punya cookie
+    // sesi Supabase — manggil getUser() buat mereka SELALU gagal dengan
+    // "Invalid Refresh Token: Refresh Token Not Found", yang bikin log
+    // Vercel penuh warning padahal itu kondisi normal (bukan bug). Dilewati
+    // sama sekali kalau memang nggak ada cookie sesi — hemat 1 round-trip ke
+    // Supabase juga buat tiap pengunjung anonim. Kalau cookie-nya ADA tapi
+    // ternyata expired/tidak valid, getUser() tetap dipanggil seperti biasa
+    // (itu kasus yang beda, bukan noise).
+    const hasAuthCookie = request.cookies.getAll().some((c) => /^sb-.*-auth-token/.test(c.name));
     const {
         data: { user },
-    } = await supabase.auth.getUser();
+    } = hasAuthCookie ? await supabase.auth.getUser() : { data: { user: null } };
 
     const path = request.nextUrl.pathname;
     const isAdminArea = path.startsWith("/admin") && path !== "/admin/login";

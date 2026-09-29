@@ -188,46 +188,17 @@ end;
 $function$;
 
 -- ============================================================
--- 5) admin_update_order_status -- REDEFINISI, isinya PERSIS SAMA dengan yang
---    sudah ada (dibaca langsung dari database sebelumnya, bukan tebakan),
---    cuma nambah SATU baris: catat completed_at pas status jadi 'ok'. Aman
---    buat order Telegram yang sudah ada juga (nggak ngubah perilaku lain).
+-- 5) admin_update_order_status -- DIHAPUS DARI FILE INI (audit menemukan file
+--    ini masih nyimpen versi LAMA/asimetris fungsi ini, yang sempat jadi bug
+--    "dobel refund" — sudah diperbaiki di supabase/fix-order-refund-symmetry.sql
+--    lalu direfactor lagi di supabase/cron-sync-orders.sql). Nama file di sesi
+--    ini TIDAK ada urutan angka (001_, 002_, dst), dan "smm.sql" kebetulan
+--    urut abjad SETELAH kedua file itu — kalau semua file di folder ini
+--    di-replay ulang urut abjad ke database baru, versi lama/buggy di sini
+--    bakal jalan TERAKHIR dan diam-diam nimpa balik perbaikannya. Definisi
+--    yang benar & terbaru ADA DI supabase/cron-sync-orders.sql, jangan
+--    ditaruh ulang di sini.
 -- ============================================================
-create or replace function public.admin_update_order_status(p_order_id uuid, p_status text, p_reason text default '')
-returns orders
-language plpgsql
-security definer
-set search_path to 'public'
-as $function$
-declare
-  v_old_status text;
-  v_order public.orders;
-begin
-  if not public.is_admin() then
-    raise exception 'not_admin';
-  end if;
-
-  select status into v_old_status from public.orders where id = p_order_id for update;
-  if v_old_status is null then
-    raise exception 'order_not_found';
-  end if;
-
-  update public.orders
-  set status = p_status,
-      fail_reason = case when p_status = 'fail' then p_reason else fail_reason end,
-      completed_at = case when p_status = 'ok' and completed_at is null then now() else completed_at end
-  where id = p_order_id
-  returning * into v_order;
-
-  if v_old_status is distinct from 'fail' and v_order.status = 'fail' then
-    update public.profiles set saldo = saldo + v_order.total where id = v_order.user_id;
-    insert into public.saldo_mutations (user_id, description, amount)
-    values (v_order.user_id, 'Refund pesanan gagal (' || v_order.order_code || ') oleh admin', v_order.total);
-  end if;
-
-  return v_order;
-end;
-$function$;
 
 -- ============================================================
 -- 6) Estimasi selesai dari riwayat pesanan asli -- rata-rata durasi

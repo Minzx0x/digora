@@ -248,6 +248,7 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
                                     <span>📷 {file.name}</span>
                                     <button
                                         type="button"
+                                        aria-label="Hapus lampiran"
                                         onClick={() => {
                                             setFile(null);
                                             if (fileInputRef.current) fileInputRef.current.value = "";
