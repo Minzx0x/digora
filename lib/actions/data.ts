@@ -62,7 +62,7 @@ export async function getDashboardData(): Promise<DashboardData> {
             .maybeSingle(),
         supabase
             .from("orders")
-            .select("order_code, target_username, package_label, total, status, created_at, fail_reason")
+            .select("order_code, target_username, target_link, kind, package_label, total, status, created_at, fail_reason")
             .eq("user_id", auth.user.id)
             .order("created_at", { ascending: false })
             .limit(50),
@@ -93,7 +93,7 @@ export async function getDashboardData(): Promise<DashboardData> {
             : { name: "", telegramUsername: "", email: auth.user.email ?? "", saldo: 0 },
         orders: (orders ?? []).map((o) => ({
             id: o.order_code as string,
-            to: "@" + o.target_username,
+            to: o.kind === "smm" ? ((o.target_link as string) ?? "") : "@" + o.target_username,
             item: o.package_label as string,
             total: Number(o.total),
             status: o.status as Status,

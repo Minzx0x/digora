@@ -7,9 +7,9 @@ import "./globals.css";
 import "./sections.css";
 
 export const metadata: Metadata = {
-  title: "Digora — Beli Telegram Stars Murah & Cepat",
+  title: "Digora — Telegram Stars, Premium & SMM Panel",
   description:
-    "Beli Telegram Stars untuk dirimu atau teman dengan harga terjangkau. Proses otomatis 24 jam, langsung masuk ke akun.",
+    "Beli Telegram Stars & Premium, atau pesan layanan SMM Panel (followers, likes, views) untuk Instagram, TikTok, YouTube, dan lainnya. Proses otomatis 24 jam.",
 };
 
 // maximumScale + userScalable:false ngunci pinch-zoom & double-tap-zoom di
@@ -23,10 +23,34 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+// Cegah "kedip" tema salah pas reload di /dashboard & /admin: baca localStorage
+// SEBELUM React hydrate, langsung setAttribute ke <html> (bukan lewat effect,
+// yang baru jalan setelah render pertama — kelihatan kedip). Aman dijalankan
+// di semua halaman (termasuk landing page) karena globals.css/sections.css
+// sama sekali tidak baca data-theme, jadi atribut ini nggak ngefek di situ.
+const THEME_INIT_SCRIPT = `
+(function () {
+  try {
+    var t = localStorage.getItem('digora-theme');
+    if (t !== 'light' && t !== 'dark') {
+      t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id">
-      <body>{children}</body>
+    // suppressHydrationWarning: script anti-flash di bawah nyetel data-theme
+    // di elemen ini secara imperatif SEBELUM React hydrate — tanpa prop ini,
+    // React ngebandingin atribut itu ke HTML dari server (yang belum punya
+    // data-theme sama sekali) dan nganggepnya mismatch, walau ini disengaja.
+    <html lang="id" suppressHydrationWarning>
+      <body>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {children}
+      </body>
     </html>
   );
 }

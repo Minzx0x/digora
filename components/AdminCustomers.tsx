@@ -1,13 +1,44 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
-import type { CustomerRow } from "@/lib/actions/admin";
+import { adminAdjustSaldoAction, type CustomerRow } from "@/lib/actions/admin";
 
 const rp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
 export default function AdminCustomers({ customers }: { customers: CustomerRow[] }) {
+    const router = useRouter();
     const [q, setQ] = useState("");
+    const [openId, setOpenId] = useState<string | null>(null);
+    const [amount, setAmount] = useState("");
+    const [reason, setReason] = useState("");
+    const [busy, setBusy] = useState(false);
+
+    function toggleAdjust(id: string) {
+        setOpenId((prev) => (prev === id ? null : id));
+        setAmount("");
+        setReason("");
+    }
+
+    async function applyAdjust(userId: string, sign: 1 | -1) {
+        const n = Number(amount.replace(/\D/g, ""));
+        if (!n) {
+            window.alert("Isi jumlah saldo dulu.");
+            return;
+        }
+        setBusy(true);
+        const res = await adminAdjustSaldoAction(userId, n * sign, reason.trim());
+        setBusy(false);
+        if (res.error) {
+            window.alert(res.error);
+            return;
+        }
+        setOpenId(null);
+        setAmount("");
+        setReason("");
+        router.refresh();
+    }
 
     const rows = useMemo(
         () =>
@@ -57,28 +88,67 @@ export default function AdminCustomers({ customers }: { customers: CustomerRow[]
                                     <th>Pesanan</th>
                                     <th>Total belanja</th>
                                     <th>Bergabung</th>
+                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {rows.map((c) => (
-                                    <tr key={c.id}>
-                                        <td>
-                                            {c.name}
-                                            {c.role === "admin" && (
-                                                <span className="d-badge ok" style={{ marginLeft: 6 }}>
-                                                    Admin
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td>{c.telegramUsername ? "@" + c.telegramUsername : "-"}</td>
-                                        <td>{c.email}</td>
-                                        <td>{rp(c.saldo)}</td>
-                                        <td>{c.orderCount}</td>
-                                        <td>{rp(c.totalSpent)}</td>
-                                        <td className="mute">
-                                            {new Date(c.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                                        </td>
-                                    </tr>
+                                    <Fragment key={c.id}>
+                                        <tr>
+                                            <td>
+                                                {c.name}
+                                                {c.role === "admin" && (
+                                                    <span className="d-badge ok" style={{ marginLeft: 6 }}>
+                                                        Admin
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td>{c.telegramUsername ? "@" + c.telegramUsername : "-"}</td>
+                                            <td>{c.email}</td>
+                                            <td>{rp(c.saldo)}</td>
+                                            <td>{c.orderCount}</td>
+                                            <td>{rp(c.totalSpent)}</td>
+                                            <td className="mute">
+                                                {new Date(c.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                                            </td>
+                                            <td>
+                                                <button type="button" className="d-pill" onClick={() => toggleAdjust(c.id)}>
+                                                    {openId === c.id ? "Batal" : "Ubah saldo"}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {openId === c.id && (
+                                            <tr>
+                                                <td colSpan={8}>
+                                                    <div className="d-saldo-adjust">
+                                                        <div className="u-input">
+                                                            <input
+                                                                inputMode="numeric"
+                                                                placeholder="Jumlah (Rp)"
+                                                                aria-label="Jumlah saldo"
+                                                                value={amount}
+                                                                onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
+                                                            />
+                                                        </div>
+                                                        <div className="u-input">
+                                                            <input
+                                                                placeholder="Alasan (opsional)"
+                                                                aria-label="Alasan penyesuaian saldo"
+                                                                value={reason}
+                                                                onChange={(e) => setReason(e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <button type="button" className="d-pill" disabled={busy} onClick={() => applyAdjust(c.id, 1)}>
+                                                            + Tambah
+                                                        </button>
+                                                        <button type="button" className="d-pill" disabled={busy} onClick={() => applyAdjust(c.id, -1)}>
+                                                            − Kurangi
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </Fragment>
                                 ))}
                             </tbody>
                         </table>

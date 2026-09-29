@@ -279,7 +279,8 @@ section[id] {
     gap: 14px;
 }
 
-.tiles-stars {
+.tiles-stars,
+.tiles-smm {
     grid-template-columns: repeat(3, 1fr);
 }
 
@@ -851,7 +852,8 @@ section[id] {
     }
 
     .tiles,
-    .tiles-stars {
+    .tiles-stars,
+    .tiles-smm {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
     }

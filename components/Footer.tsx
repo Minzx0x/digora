@@ -6,7 +6,7 @@ export default function Footer() {
             <div className="foot-in">
                 <div className="foot-brand">
                     <Brand light />
-                    <p>Beli Telegram Stars cepat dan terjangkau.</p>
+                    <p>Telegram Stars, Premium, dan SMM Panel — cepat dan terjangkau.</p>
                     <div className="foot-social">
                         <a href="#">Instagram</a>
                         <a href="#">TikTok</a>
@@ -18,6 +18,7 @@ export default function Footer() {
                     <div>
                         <h3>Produk</h3>
                         <a href="#produk">Paket Stars</a>
+                        <a href="#smm">SMM Panel</a>
                         <a href="#produk">Kirim ke teman</a>
                         <a href="#harga">Harga</a>
                     </div>

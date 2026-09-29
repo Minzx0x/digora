@@ -4,11 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Brand from "./Brand";
+import ThemeToggle from "./ThemeToggle";
 import { signOutAction } from "@/lib/actions/auth";
 
 const I = {
     home: "M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
     star: "M12 2l3 6.5 7 .9-5.1 4.8 1.3 7L12 17.8 5.8 21.2l1.3-7L2 9.4l7-.9z",
+    trend: "M3 17l6-6 4 4 8-8M15 7h6v6",
     bag: "M6 7h12l1 13H5zM9 7a3 3 0 0 1 6 0",
     user: "M20 21v-1a5 5 0 0 0-5-5H9a5 5 0 0 0-5 5v1M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8",
     wallet: "M3 7a2 2 0 0 1 2-2h13v4M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2M16 14.5h.01",
@@ -24,7 +26,7 @@ function Ico({ d }: { d: string }) {
     );
 }
 
-export type DashboardSection = "beranda" | "saldo" | "stars" | "riwayat" | "profil" | "bantuan";
+export type DashboardSection = "beranda" | "saldo" | "stars" | "smm" | "riwayat" | "profil" | "bantuan";
 
 // Sidebar dashboard pelanggan dipakai bareng di semua halaman /dashboard/* —
 // sama pola-nya dengan AdminSidebar buat /admin/*, supaya navigasi jadi route
@@ -43,15 +45,18 @@ export default function DashboardSidebar({ active }: { active: DashboardSection 
 
     return (
         <>
-            <button type="button" className="d-menu-btn-fixed" aria-label="Buka menu" onClick={() => setOpen(true)}>
-                <Ico d="M4 7h16M4 12h16M4 17h16" />
-            </button>
+            {!open && (
+                <button type="button" className="d-menu-btn-fixed" aria-label="Buka menu" onClick={() => setOpen(true)}>
+                    <Ico d="M4 7h16M4 12h16M4 17h16" />
+                </button>
+            )}
 
             <div className={`d-side-backdrop ${open ? "show" : ""}`} onClick={() => setOpen(false)} aria-hidden="true" />
 
             <aside className={`d-side ${open ? "open" : ""}`}>
                 <div className="d-brand">
-                    <Brand />
+                    <Brand themed />
+                    <ThemeToggle />
                 </div>
 
                 <button type="button" className="d-side-close" aria-label="Tutup menu" onClick={() => setOpen(false)}>
@@ -62,6 +67,7 @@ export default function DashboardSidebar({ active }: { active: DashboardSection 
                     {link("beranda", "/dashboard/beranda", I.home, "Beranda")}
                     {link("saldo", "/dashboard/saldo", I.wallet, "Isi Saldo")}
                     {link("stars", "/dashboard/stars", I.star, "Stars & Premium")}
+                    {link("smm", "/dashboard/smm", I.trend, "SMM Panel")}
                     {link("riwayat", "/dashboard/riwayat", I.bag, "Pesanan saya")}
                     {link("profil", "/dashboard/profil", I.user, "Profil")}
                     {link("bantuan", "/dashboard/bantuan", I.help, "Bantuan")}

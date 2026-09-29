@@ -39,7 +39,9 @@ export default function AuthForm({ mode, onSwitch }: { mode: Mode; onSwitch?: ()
 
         if (reg) {
             if (v("name").length < 2) next.name = "Nama minimal 2 karakter.";
-            if (!/^[a-zA-Z0-9_]{5,32}$/.test(v("username")))
+            // Opsional — cuma divalidasi formatnya kalau memang diisi (customer yang
+            // cuma mau SMM Panel nggak butuh username Telegram).
+            if (v("username") && !/^[a-zA-Z0-9_]{5,32}$/.test(v("username")))
                 next.username = "Username Telegram 5–32 karakter (huruf, angka, _).";
         }
         if (!EMAIL_RE.test(v("email"))) next.email = "Format email belum benar.";
@@ -116,8 +118,8 @@ export default function AuthForm({ mode, onSwitch }: { mode: Mode; onSwitch?: ()
             <h1 className="auth-title">{reg ? "Buat akun" : "Selamat datang"}</h1>
             <p className="auth-sub">
                 {reg
-                    ? "Daftar gratis dan mulai beli Telegram Stars dalam hitungan detik."
-                    : "Masuk untuk melihat pesanan dan beli Telegram Stars."}
+                    ? "Daftar gratis dan mulai belanja dalam hitungan detik."
+                    : "Masuk untuk melihat pesanan dan belanja lagi."}
             </p>
 
             <form className="auth-form" onSubmit={onSubmit} noValidate>
@@ -127,7 +129,7 @@ export default function AuthForm({ mode, onSwitch }: { mode: Mode; onSwitch?: ()
                 {reg &&
                     field(
                         "username",
-                        "Username Telegram",
+                        "Username Telegram (opsional)",
                         { type: "text", placeholder: "username", autoComplete: "username" },
                         "field-prefix",
                     )}

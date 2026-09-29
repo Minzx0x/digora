@@ -26,14 +26,18 @@ export default function SyaratKetentuanPage() {
 
                 <h2>1. Tentang Layanan</h2>
                 <p>
-                    Digora adalah platform yang menyediakan pembelian Telegram Stars dan Telegram Premium secara online.
-                    Pesanan diproses secara otomatis begitu pembayaran terkonfirmasi, dan dikirim langsung ke username
-                    Telegram tujuan yang kamu masukkan.
+                    Digora adalah platform yang menyediakan pembelian Telegram Stars, Telegram Premium, dan layanan SMM
+                    Panel (followers, likes, views, dan interaksi lain untuk media sosial) secara online. Pesanan diproses
+                    otomatis begitu pembayaran terkonfirmasi, dan dikirim/diproses ke tujuan (username Telegram atau
+                    link/username akun media sosial) yang kamu masukkan.
                 </p>
 
                 <h2>2. Akun Pengguna</h2>
                 <ul>
-                    <li>Kamu wajib mengisi data pendaftaran (nama, username Telegram, email) dengan benar dan akurat.</li>
+                    <li>
+                        Kamu wajib mengisi data pendaftaran (nama, email) dengan benar dan akurat; username Telegram
+                        bersifat opsional, cuma dibutuhkan kalau kamu memesan produk Telegram.
+                    </li>
                     <li>Kamu bertanggung jawab menjaga kerahasiaan password akunmu sendiri.</li>
                     <li>Satu akun hanya untuk satu pengguna — dilarang memperjualbelikan atau memindahtangankan akun.</li>
                     <li>Digora berhak menangguhkan akun yang terindikasi melakukan kecurangan atau penyalahgunaan layanan.</li>
@@ -41,11 +45,11 @@ export default function SyaratKetentuanPage() {
 
                 <h2>3. Pemesanan &amp; Pengiriman</h2>
                 <p>
-                    Pastikan username Telegram tujuan sudah benar sebelum melanjutkan pembayaran — Digora tidak bertanggung
-                    jawab atas kesalahan pengiriman akibat username yang salah ketik atau tidak valid yang diisi sendiri oleh
-                    pengguna. Waktu pengiriman biasanya otomatis dalam hitungan menit setelah pembayaran terkonfirmasi, namun
-                    bisa lebih lama dalam kondisi tertentu di luar kendali Digora (gangguan pada pihak penyedia/supplier,
-                    gangguan Telegram, dll).
+                    Pastikan tujuan pesanan (username Telegram atau link/username akun media sosial) sudah benar sebelum
+                    melanjutkan pembayaran — Digora tidak bertanggung jawab atas kesalahan pengiriman akibat data tujuan
+                    yang salah ketik atau tidak valid yang diisi sendiri oleh pengguna. Waktu proses biasanya otomatis
+                    dalam hitungan menit setelah pembayaran terkonfirmasi, namun bisa lebih lama dalam kondisi tertentu di
+                    luar kendali Digora (gangguan pada pihak penyedia/supplier, gangguan platform tujuan, dll).
                 </p>
 
                 <h2>4. Pembayaran &amp; Saldo</h2>

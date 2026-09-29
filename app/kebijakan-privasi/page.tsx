@@ -6,8 +6,9 @@ export const metadata: Metadata = { title: "Kebijakan Privasi — Digora" };
 
 // Sama kayak halaman Syarat & Ketentuan — kerangkanya udah dicocokkan ke data
 // yang BENERAN dikumpulkan & pihak ketiga yang BENERAN dipakai Digora
-// (Supabase buat database, Paymenku buat payment gateway, RSC/resell.codes
-// sebagai supplier Stars & Premium), tapi tetap disarankan direview sama yang
+// (Supabase buat database, Paymenku buat payment gateway, supplier Stars/Premium
+// & SMM Panel buat neruskan pesanan) — nama supplier produk SENGAJA nggak
+// disebut di halaman publik manapun, tapi tetap disarankan direview sama yang
 // paham hukum sebelum dipakai produksi.
 export default function KebijakanPrivasiPage() {
     return (
@@ -25,7 +26,7 @@ export default function KebijakanPrivasiPage() {
 
                 <h2>1. Data yang Kami Kumpulkan</h2>
                 <ul>
-                    <li>Nama lengkap, username Telegram, dan email yang kamu isi saat mendaftar.</li>
+                    <li>Nama lengkap, email, dan username Telegram (kalau diisi) yang kamu isi saat mendaftar.</li>
                     <li>Password akunmu — disimpan dalam bentuk terenkripsi (hashed), tidak pernah disimpan sebagai teks biasa dan tidak bisa dilihat oleh siapa pun termasuk tim Digora.</li>
                     <li>Riwayat transaksi, pesanan, dan saldo akunmu di Digora.</li>
                 </ul>
@@ -40,7 +41,7 @@ export default function KebijakanPrivasiPage() {
                 <p>Untuk menjalankan layanan, Digora bekerja sama dengan beberapa pihak ketiga berikut:</p>
                 <ul>
                     <li><b>Payment gateway (Paymenku)</b> — memproses pembayaran QRIS, e-wallet, dan transfer bank. Data yang dibagikan sebatas nominal transaksi dan referensi pembayaran, bukan password akunmu.</li>
-                    <li><b>Supplier Telegram Stars &amp; Premium (RSC / resell.codes)</b> — dipakai untuk meneruskan pesanan Stars/Premium ke username Telegram tujuan. Data yang dibagikan sebatas username Telegram tujuan dan jumlah pesanan.</li>
+                    <li><b>Mitra pemrosesan pesanan (pihak ketiga)</b> — dipakai untuk meneruskan/memproses pesanan Telegram Stars/Premium dan SMM Panel ke tujuan yang kamu masukkan (username Telegram atau link/username akun media sosial). Data yang dibagikan sebatas tujuan pesanan dan jumlah pesanan.</li>
                     <li><b>Penyedia database (Supabase)</b> — menyimpan data akun dan transaksi secara aman.</li>
                 </ul>
                 <p>Kami tidak menjual atau membagikan datamu ke pihak lain di luar yang disebutkan di atas.</p>

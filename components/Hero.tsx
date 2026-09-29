@@ -9,7 +9,7 @@ import Stats from "./Stats";
 
 const TITLE = (
   <>
-    Telegram Stars
+    Telegram &amp; SMM Panel
     <br />
     murah, cepat,
     <br />
@@ -18,7 +18,7 @@ const TITLE = (
 );
 
 const DESC =
-  "Beli Stars untuk dirimu atau kirim ke teman. Cukup masukkan username, bayar, dan Stars langsung masuk.";
+  "Beli Telegram Stars/Premium atau tingkatkan followers, likes, dan views di Instagram, TikTok, YouTube, dan lainnya — semua dalam satu akun, proses otomatis 24 jam.";
 
 // Design size of the desktop hero (in design px). Width grows on wide screens.
 const DESIGN_W = 1200;
@@ -69,7 +69,7 @@ export default function Hero() {
         <div className="m-top">
           <Brand />
           <a className="btn-dark" href="/daftar" style={{ marginLeft: 0 }}>
-            Beli Stars
+            Daftar sekarang
           </a>
         </div>
         <ScaleBox width={SCENE_W} height={DESIGN_H}>

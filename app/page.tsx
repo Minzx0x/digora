@@ -1,5 +1,6 @@
 import Hero from "@/components/Hero";
 import Products from "@/components/Products";
+import SmmProducts from "@/components/SmmProducts";
 import HowItWorks from "@/components/HowItWorks";
 import Benefits from "@/components/Benefits";
 import Faq from "@/components/Faq";
@@ -21,6 +22,7 @@ export default function Home() {
       <FitWidth>
         <div className="stack">
           <Products />
+          <SmmProducts />
           <HowItWorks />
           <Benefits />
           <Faq />

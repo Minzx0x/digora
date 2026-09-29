@@ -1,6 +1,11 @@
-export default function Brand({ light = false }: { light?: boolean }) {
-  const ink = light ? "#ffffff" : "#0b0b0c";
-  const cut = light ? "#0b0b0c" : "#ffffff";
+// themed: dipakai KHUSUS dari sidebar dashboard/admin (satu-satunya tempat
+// dark mode berlaku) supaya wordmark ikut var(--d-text) alih-alih hex mati
+// #0b0b0c yang bikin logo nyaris tak kelihatan di atas background gelap.
+// Landing page/auth screen lain TIDAK pakai prop ini, jadi tampilannya tetap
+// persis sama seperti sebelumnya.
+export default function Brand({ light = false, themed = false }: { light?: boolean; themed?: boolean }) {
+  const ink = themed ? "var(--d-text)" : light ? "#ffffff" : "#0b0b0c";
+  const cut = themed ? "var(--d-bg)" : light ? "#0b0b0c" : "#ffffff";
   return (
     <a
       href="#"

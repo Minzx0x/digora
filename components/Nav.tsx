@@ -6,9 +6,9 @@ const ITEMS = [
   { href: "#produk", label: "Paket", id: "produk" },
   { href: "#harga", label: "Harga", id: "harga" },
   { href: "#bantuan", label: "Bantuan", id: "bantuan" },
-  { href: "/daftar", label: "Beli Stars", id: "" },
+  { href: "/daftar", label: "Daftar", id: "" },
 ];
-const HOME = ITEMS.length - 1; // "Beli Stars" aktif saat berada di paling atas
+const HOME = ITEMS.length - 1; // "Daftar" aktif saat berada di paling atas
 
 export default function Nav() {
   const [active, setActive] = useState(HOME);

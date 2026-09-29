@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import AdminOverview from "@/components/AdminOverview";
 import SupplierBalanceCard from "@/components/SupplierBalanceCard";
+import SmmflareBalanceCard from "@/components/SmmflareBalanceCard";
 import { getAdminData } from "@/lib/actions/admin";
 
 // Kartu saldo dulu ikut nunggu di dalam getAdminData() — kalau API supplier
@@ -26,9 +27,14 @@ export default async function AdminPage() {
         <AdminOverview
             data={data}
             balanceSlot={
-                <Suspense fallback={<BalanceSkeleton />}>
-                    <SupplierBalanceCard usdIdrRate={data.usdIdrRate} />
-                </Suspense>
+                <>
+                    <Suspense fallback={<BalanceSkeleton />}>
+                        <SupplierBalanceCard usdIdrRate={data.usdIdrRate} />
+                    </Suspense>
+                    <Suspense fallback={<BalanceSkeleton />}>
+                        <SmmflareBalanceCard usdIdrRate={data.usdIdrRate} />
+                    </Suspense>
+                </>
             }
         />
     );

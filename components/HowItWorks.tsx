@@ -6,20 +6,20 @@ const art = { position: "absolute", right: 14, top: 10 } as const;
 const STEPS = [
     {
         n: "1",
-        title: "Pilih paket Stars",
-        text: "Tentukan jumlah Stars yang kamu butuhkan, untuk dirimu atau temanmu.",
+        title: "Pilih produk",
+        text: "Stars & Premium buat Telegram, atau layanan SMM Panel buat Instagram, TikTok, YouTube, dan lainnya.",
         art: <StarCoin className="float-slow" scale={0.4} style={{ ...art, right: 20 }} />,
     },
     {
         n: "2",
-        title: "Isi username & bayar",
-        text: "Masukkan username Telegram tujuan, pilih metode pembayaran, lalu selesaikan pembayaran.",
+        title: "Isi tujuan & bayar",
+        text: "Masukkan username Telegram atau link/username akun media sosial tujuan, pilih metode pembayaran, lalu selesaikan pembayaran.",
         art: <RpCoin className="float" scale={0.5} style={art} />,
     },
     {
         n: "3",
-        title: "Stars langsung masuk",
-        text: "Stars dikirim otomatis begitu pembayaranmu terkonfirmasi.",
+        title: "Diproses otomatis",
+        text: "Pesanan dikirim/diproses otomatis begitu pembayaranmu terkonfirmasi.",
         art: <BoltCoin className="float-slow" scale={0.58} style={{ ...art, right: 10, top: 14 }} />,
     },
 ];

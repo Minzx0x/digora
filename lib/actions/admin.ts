@@ -4,6 +4,14 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { getRscBalanceUsd, getRscOrderStatus, mapRscStatus, RscError } from "@/lib/rsc";
+import {
+    getSmmflareOrderStatus,
+    mapSmmflareStatus,
+    refillSmmflareOrder,
+    getSmmflareRefillStatus,
+    cancelSmmflareOrder,
+    SmmflareError,
+} from "@/lib/smmflare";
 import type { PackageRow } from "@/lib/actions/catalog";
 
 // Dipakai berulang di semua action admin.ts: pastikan yang manggil sudah login
@@ -15,7 +23,7 @@ import type { PackageRow } from "@/lib/actions/catalog";
 // x-digora-uid/x-digora-role; kalau ada, langsung dipercaya. Fallback ke cara
 // lama cuma buat kondisi yang gak lewat proxy.ts (mis. dipanggil dari luar
 // alur normal), jadi tetap aman.
-async function requireAdmin() {
+export async function requireAdmin() {
     const supabase = await createClient();
     const h = await headers();
     const headerUid = h.get("x-digora-uid");
@@ -44,7 +52,37 @@ export type AdminOrderRow = {
     time: string; // ISO
     rscOrderNumber: number | null;
     failReason: string;
+    // Pesanan SMM (lihat lib/smmflare.ts + supabase/smm.sql) numpang di tabel
+    // orders yang sama — dua field ini generik biar bisa nampung supplier lain
+    // di masa depan tanpa nambah kolom rsc_* lagi tiap ada supplier baru.
+    provider: string; // "rsc" (default, order Telegram lama) | "smmflare"
+    providerOrderId: number | null;
 };
+
+// Baris mentah dari select orders dipakai di dua tempat (Ringkasan & halaman
+// Pesanan penuh) — disatukan di sini biar konsisten. Order SMM tidak punya
+// target_username (kolomnya NULL, lihat supabase/smm.sql), jadi "username" di
+// sini sebenarnya lebih tepat dibaca sebagai "tujuan pesanan" — link buat SMM,
+// @username buat Telegram. rscOrderNumber tetap dari kolom lama (order Telegram
+// existing), providerOrderId dari kolom baru yang generik (order SMM).
+function mapAdminOrderRow(o: Record<string, unknown>): AdminOrderRow {
+    const kind = o.kind as string;
+    return {
+        id: o.id as string,
+        code: o.order_code as string,
+        username: kind === "smm" ? ((o.target_link as string) ?? "") : "@" + (o.target_username as string),
+        packageLabel: o.package_label as string,
+        units: Number(o.units),
+        total: Number(o.total),
+        status: o.status as AdminStatus,
+        time: o.created_at as string,
+        rscOrderNumber: o.rsc_order_number === null || o.rsc_order_number === undefined ? null : Number(o.rsc_order_number),
+        failReason: (o.fail_reason as string) ?? "",
+        provider: (o.provider as string) ?? "rsc",
+        providerOrderId:
+            o.provider_order_id === null || o.provider_order_id === undefined ? null : Number(o.provider_order_id),
+    };
+}
 
 export type RevenuePoint = { l: string; v: number };
 
@@ -117,25 +155,14 @@ export async function getAdminData(): Promise<AdminData> {
         supabase
             .from("orders")
             .select(
-                "id, order_code, target_username, package_label, units, total, status, created_at, rsc_order_number, fail_reason",
+                "id, order_code, target_username, target_link, kind, package_label, units, total, status, created_at, rsc_order_number, provider, provider_order_id, fail_reason",
             )
             .order("created_at", { ascending: false })
             .limit(200),
         supabase.from("orders").select("total, status, created_at").gte("created_at", start30.toISOString()),
     ]);
 
-    const orders: AdminOrderRow[] = (ordersRaw ?? []).map((o) => ({
-        id: o.id as string,
-        code: o.order_code as string,
-        username: "@" + (o.target_username as string),
-        packageLabel: o.package_label as string,
-        units: Number(o.units),
-        total: Number(o.total),
-        status: o.status as AdminStatus,
-        time: o.created_at as string,
-        rscOrderNumber: o.rsc_order_number === null || o.rsc_order_number === undefined ? null : Number(o.rsc_order_number),
-        failReason: (o.fail_reason as string) ?? "",
-    }));
+    const orders: AdminOrderRow[] = (ordersRaw ?? []).map(mapAdminOrderRow);
 
     const waitingCount = orders.filter((o) => o.status === "wait" || o.status === "proc").length;
 
@@ -263,23 +290,12 @@ export async function getAllOrdersData(): Promise<{ isAdmin: boolean; orders: Ad
     const { data: ordersRaw } = await supabase
         .from("orders")
         .select(
-            "id, order_code, target_username, package_label, units, total, status, created_at, rsc_order_number, fail_reason",
+            "id, order_code, target_username, target_link, kind, package_label, units, total, status, created_at, rsc_order_number, provider, provider_order_id, fail_reason",
         )
         .order("created_at", { ascending: false })
         .limit(1000);
 
-    const orders: AdminOrderRow[] = (ordersRaw ?? []).map((o) => ({
-        id: o.id as string,
-        code: o.order_code as string,
-        username: "@" + (o.target_username as string),
-        packageLabel: o.package_label as string,
-        units: Number(o.units),
-        total: Number(o.total),
-        status: o.status as AdminStatus,
-        time: o.created_at as string,
-        rscOrderNumber: o.rsc_order_number === null || o.rsc_order_number === undefined ? null : Number(o.rsc_order_number),
-        failReason: (o.fail_reason as string) ?? "",
-    }));
+    const orders: AdminOrderRow[] = (ordersRaw ?? []).map(mapAdminOrderRow);
 
     return { isAdmin: true, orders };
 }
@@ -328,6 +344,82 @@ export async function adminCheckRscOrderAction(
         return { error: null };
     } catch (e) {
         return { error: e instanceof RscError ? e.message : "Gagal ambil status dari supplier." };
+    }
+}
+
+// Tarik ulang status order SMM ini dari smmflare — sama polanya dengan
+// adminCheckRscOrderAction di atas, cuma beda supplier. Reuse admin_update_order_status
+// yang sama (sudah generik, tidak ada logic khusus RSC di dalamnya).
+export async function adminCheckSmmOrderAction(
+    orderId: string,
+    providerOrderId: number,
+): Promise<{ error: string | null }> {
+    try {
+        const smmOrder = await getSmmflareOrderStatus(providerOrderId);
+        const supabase = await createClient();
+        const { error } = await supabase.rpc("admin_update_order_status", {
+            p_order_id: orderId,
+            p_status: mapSmmflareStatus(smmOrder.status),
+            p_reason: mapSmmflareStatus(smmOrder.status) === "fail" ? "Pesanan gagal diproses." : "",
+        });
+        if (error) return { error: "Gagal simpan status. Pastikan akun ini admin." };
+        revalidatePath("/admin/pesanan");
+        revalidatePath("/admin", "layout");
+        revalidatePath("/dashboard", "layout");
+        return { error: null };
+    } catch (e) {
+        return { error: e instanceof SmmflareError ? e.message : "Gagal ambil status dari supplier." };
+    }
+}
+
+// Minta smmflare kirim ulang (refill) satu order SMM yang engagement-nya drop.
+// TIDAK mengubah status/total order kita (refill gratis dari sisi supplier) —
+// makanya nggak lewat admin_update_order_status, cukup dilaporkan ID refill-nya
+// ke admin buat dicek lagi manual (adminCheckRefillStatusAction di bawah).
+export async function adminRefillSmmOrderAction(providerOrderId: number): Promise<{ error: string | null; refillId?: number }> {
+    const { ok } = await requireAdmin();
+    if (!ok) return { error: "Bukan admin." };
+    try {
+        const { refillId } = await refillSmmflareOrder(providerOrderId);
+        return { error: null, refillId };
+    } catch (e) {
+        return { error: e instanceof SmmflareError ? e.message : "Gagal minta refill ke supplier." };
+    }
+}
+
+export async function adminCheckRefillStatusAction(refillId: number): Promise<{ error: string | null; status?: string }> {
+    const { ok } = await requireAdmin();
+    if (!ok) return { error: "Bukan admin." };
+    try {
+        const status = await getSmmflareRefillStatus(refillId);
+        return { error: null, status };
+    } catch (e) {
+        return { error: e instanceof SmmflareError ? e.message : "Gagal ambil status refill dari supplier." };
+    }
+}
+
+// Batalkan order SMM yang belum selesai di supplier — kalau supplier konfirmasi
+// batal, order kita ditandai 'fail' lewat RPC yang sudah ada (admin_update_order_status),
+// yang OTOMATIS refund saldo pembeli juga. Tidak ada RPC baru yang dibutuhkan.
+export async function adminCancelSmmOrderAction(orderId: string, providerOrderId: number): Promise<{ error: string | null }> {
+    const { supabase, ok } = await requireAdmin();
+    if (!ok) return { error: "Bukan admin." };
+    try {
+        const res = await cancelSmmflareOrder(providerOrderId);
+        if (!res.cancelled) return { error: res.error ?? "Gagal membatalkan pesanan di supplier." };
+
+        const { error } = await supabase.rpc("admin_update_order_status", {
+            p_order_id: orderId,
+            p_status: "fail",
+            p_reason: "Pesanan dibatalkan di supplier oleh admin.",
+        });
+        if (error) return { error: "Dibatalkan di supplier, tapi gagal simpan status di Digora." };
+        revalidatePath("/admin/pesanan");
+        revalidatePath("/admin", "layout");
+        revalidatePath("/dashboard", "layout");
+        return { error: null };
+    } catch (e) {
+        return { error: e instanceof SmmflareError ? e.message : "Gagal membatalkan pesanan di supplier." };
     }
 }
 
@@ -380,6 +472,29 @@ export async function getCustomersData(): Promise<{ isAdmin: boolean; customers:
     }));
 
     return { isAdmin: true, customers };
+}
+
+// Admin nambah/kurangi saldo customer manual (kompensasi, koreksi, dst) —
+// amount POSITIF buat nambah, NEGATIF buat ngurangi. RPC yang nolak kalau
+// hasilnya bikin saldo minus (lihat supabase/admin-adjust-saldo.sql).
+export async function adminAdjustSaldoAction(userId: string, amount: number, reason: string): Promise<{ error: string | null }> {
+    if (!Number.isFinite(amount) || amount === 0) return { error: "Isi jumlah saldo dulu." };
+    const { supabase, ok } = await requireAdmin();
+    if (!ok) return { error: "Bukan admin." };
+
+    const { error } = await supabase.rpc("admin_adjust_saldo", {
+        p_user_id: userId,
+        p_amount: Math.round(amount),
+        p_reason: reason.trim(),
+    });
+    if (error) {
+        if (error.message.includes("insufficient_saldo")) return { error: "Saldo customer tidak cukup buat dikurangi sebanyak itu." };
+        return { error: "Gagal ubah saldo. Pastikan akun ini admin." };
+    }
+    revalidatePath("/admin/pelanggan");
+    revalidatePath("/admin", "layout");
+    revalidatePath("/dashboard", "layout");
+    return { error: null };
 }
 
 // ============================================================

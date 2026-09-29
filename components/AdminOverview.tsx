@@ -55,7 +55,7 @@ function Chart({ data }: { data: readonly { l: string; v: number }[] }) {
                 const y = padT + innerH - (t / max) * innerH;
                 return (
                     <g key={t}>
-                        <line x1={padL} x2={W} y1={y} y2={y} stroke="#eceef3" strokeWidth="1" />
+                        <line x1={padL} x2={W} y1={y} y2={y} stroke="var(--d-divider)" strokeWidth="1" />
                         <text x={padL - 8} y={y + 4} textAnchor="end">
                             {t}jt
                         </text>

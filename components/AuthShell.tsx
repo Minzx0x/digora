@@ -15,22 +15,22 @@ const COPY: Record<Mode, { title: React.ReactNode; text: string }> = {
     login: {
         title: (
             <>
-                Telegram Stars,
+                Satu akun,
                 <br />
-                langsung masuk.
+                semua produk.
             </>
         ),
-        text: "Masuk untuk memantau pesanan dan beli Stars kapan saja, 24/7.",
+        text: "Masuk untuk memantau pesanan Stars, Premium, dan SMM Panel kapan saja, 24/7.",
     },
     register: {
         title: (
             <>
-                Mulai beli Stars
+                Mulai belanja
                 <br />
                 tanpa ribet.
             </>
         ),
-        text: "Buat akun gratis, simpan username Telegram, dan pesan Stars dalam hitungan detik.",
+        text: "Buat akun gratis, lalu pesan Stars, Premium, atau SMM Panel dalam hitungan detik.",
     },
 };
 

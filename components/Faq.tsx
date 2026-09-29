@@ -23,6 +23,14 @@ const FAQ = [
         a: "Periksa username sebelum membayar. Pesanan yang sudah terkirim tidak bisa dibatalkan, jadi pastikan datanya benar.",
     },
     {
+        q: "Apa itu SMM Panel?",
+        a: "Layanan menambah followers, likes, views, dan interaksi lain untuk akun media sosial (Instagram, TikTok, YouTube, dll). Masukkan link/username tujuan, pilih layanan, lalu bayar.",
+    },
+    {
+        q: "Followers/likes SMM berkurang, gimana?",
+        a: "Sebagian layanan punya garansi refill (keterangan ada di tiap layanan) — hubungi admin buat diproses ulang gratis kalau turun.",
+    },
+    {
         q: "Metode pembayaran apa saja yang tersedia?",
         a: "Kamu bisa membayar lewat QRIS, e-wallet, atau transfer bank.",
     },

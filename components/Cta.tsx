@@ -17,14 +17,14 @@ export default function Cta() {
             <Reveal className="cta-in">
                 <p className="eyebrow eyebrow-light">Mulai sekarang</p>
                 <h2 className="h2 cta-title">
-                    Butuh Stars sekarang?
+                    Siap mulai?
                     <br />
-                    Beli dalam hitungan detik.
+                    Daftar dan pesan dalam hitungan detik.
                 </h2>
-                <p className="cta-text">Pilih paket, isi username, dan Stars langsung masuk ke akun Telegram.</p>
+                <p className="cta-text">Pilih Stars, Premium, atau layanan SMM Panel — isi tujuan, bayar, dan pesananmu diproses otomatis.</p>
                 <div className="cta-actions">
                     <a className="btn-light" href="/daftar">
-                        Beli Stars
+                        Daftar sekarang
                     </a>
                     <a className="btn-ghost" href="#bantuan">
                         Lihat bantuan

@@ -1,29 +1,113 @@
+/* Token warna dark mode — cuma permukaan STRUKTURAL (bg halaman/kartu, teks,
+   border, input, hover, badge status, skeleton) yang di-tokenkan. Warna aksen
+   biru (#2540ff), gradient kartu saldo, warna ikon platform SMM, dan kotak
+   dekoratif lain SENGAJA dibiarkan hex literal — itu brand/dekorasi yang
+   memang harus tetap sama vivid-nya di kedua tema, bukan "permukaan" yang
+   perlu ikut gelap. Toggle-nya nyetel data-theme di <html> (lihat
+   components/ThemeToggle.tsx + script anti-flash di app/layout.tsx). */
+:root {
+    --d-bg: #f4f4f6;
+    --d-surface-2: #f4f4f6;
+    --d-card-bg: #ffffff;
+    --d-hover-bg: #fafafc;
+    --d-text: #0b0b0c;
+    --d-text-mute: #6f6f78;
+    --d-text-mute-2: #8b8b94;
+    --d-divider: #eceef3;
+    --d-skel: #e9ebf1;
+    --d-invert-bg: #0b0b0c;
+    --d-invert-text: #ffffff;
+    --d-badge-ok-bg: #e6f8ee;
+    --d-badge-ok-text: #12874a;
+    --d-badge-wait-bg: #fff4cc;
+    --d-badge-wait-text: #a06b00;
+    --d-badge-proc-bg: #e6ebff;
+    --d-badge-fail-bg: #fdebec;
+    --d-badge-fail-text: #c62d3a;
+    color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+    --d-bg: #121214;
+    --d-surface-2: #232328;
+    --d-card-bg: #1c1c20;
+    --d-hover-bg: #232328;
+    --d-text: #f2f2f3;
+    --d-text-mute: #a3a3ac;
+    --d-text-mute-2: #86868f;
+    --d-divider: #2a2a30;
+    --d-skel: #26262c;
+    --d-invert-bg: #f2f2f3;
+    --d-invert-text: #0b0b0c;
+    --d-badge-ok-bg: #123321;
+    --d-badge-ok-text: #4ade80;
+    --d-badge-wait-bg: #3a2f0a;
+    --d-badge-wait-text: #f5c542;
+    --d-badge-proc-bg: #1b2450;
+    --d-badge-fail-bg: #3a1418;
+    --d-badge-fail-text: #f28b93;
+    color-scheme: dark;
+}
+
 .dash-page {
     min-height: 100vh;
     padding: 12px;
+    /* globals.css nyetel `body { color: #0b0b0c }` buat landing page, warna
+       itu TIDAK ikut var(--d-text) — jadi tiap elemen di dashboard/admin yang
+       nggak punya `color` sendiri (judul, isi tabel, dst) bakal ke-inherit
+       hitam mati itu dan nyaris tak kelihatan pas dark mode. Disetel ulang
+       di sini sebagai default buat SELURUH isi dashboard/admin. */
+    color: var(--d-text);
 }
 
 .dash {
     display: grid;
     grid-template-columns: 240px 1fr;
     min-height: calc(100vh - 24px);
-    background: #f4f4f6;
+    background: var(--d-bg);
     border-radius: 32px;
     overflow: clip;
 }
 
 /* sidebar */
 .d-side {
-    background: #ffffff;
+    background: var(--d-card-bg);
     padding: 28px 18px;
     display: flex;
     flex-direction: column;
     gap: 28px;
-    border-right: 1px solid #ececf0;
+    border-right: 1px solid var(--d-divider);
 }
 
 .d-brand {
     padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+/* Tombol ganti tema — sengaja dipisah dari .d-nav (bukan salah satu baris
+   menu halaman), cuma ikon bulat kecil di samping logo, biar nggak ketuker
+   sama link navigasi beneran. */
+.d-theme-toggle {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1.5px solid var(--d-divider);
+    background: none;
+    color: var(--d-text-mute);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.d-theme-toggle:hover {
+    background: var(--d-surface-2);
+    color: var(--d-text);
+    border-color: transparent;
 }
 
 .d-nav {
@@ -40,7 +124,7 @@
     border-radius: 14px;
     font-size: 14.5px;
     font-weight: 600;
-    color: #6f6f78;
+    color: var(--d-text-mute);
     transition: background 0.15s, color 0.15s;
 }
 
@@ -49,14 +133,15 @@
 }
 
 .d-link:hover {
-    background: #f4f4f6;
-    color: #0b0b0c;
+    background: var(--d-surface-2);
+    color: var(--d-text);
 }
 
 .d-link.on {
-    background: #0b0b0c;
-    color: #ffffff;
+    background: var(--d-invert-bg);
+    color: var(--d-invert-text);
 }
+
 
 .d-side-foot {
     margin-top: auto;
@@ -113,7 +198,7 @@
     margin: 4px 0 0;
     font-size: 14px;
     font-weight: 500;
-    color: #6f6f78;
+    color: var(--d-text-mute);
 }
 
 .d-actions {
@@ -127,11 +212,11 @@
     min-width: 220px;
     border: 0;
     border-radius: 999px;
-    background: #ffffff;
+    background: var(--d-card-bg);
     font: inherit;
     font-size: 14px;
     font-weight: 500;
-    color: #0b0b0c;
+    color: var(--d-text);
 }
 
 .d-search:focus-visible {
@@ -153,12 +238,16 @@
 }
 
 .d-btn:hover {
-    background: #0b0b0c;
+    /* Bukan var(--d-invert-bg) — di dark mode itu putih, bikin tombol biru
+       hilang dulu jadi putih-di-atas-putih pas transisi. Cukup gelapin
+       birunya (warna aksen sendiri), bukan invert ke hitam/putih halaman —
+       tetap kebaca sebagai "tombol biru" di kedua tema. */
+    background: #1530d9;
 }
 
 /* cards */
 .d-card {
-    background: #ffffff;
+    background: var(--d-card-bg);
     border-radius: 24px;
     padding: 22px;
 }
@@ -181,7 +270,9 @@
 
 .d-grid-top {
     display: grid;
-    grid-template-columns: 1.15fr 2fr;
+    /* 2 kartu saldo supplier (RSC + smmflare) berdampingan, lalu kotak stats
+       yang lebih lebar */
+    grid-template-columns: 1fr 1fr 1.7fr;
     gap: 16px;
 }
 
@@ -226,14 +317,19 @@
 
 .d-pill {
     padding: 8px 16px;
-    border: 0;
+    border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.16);
     font: inherit;
     font-size: 13px;
     font-weight: 700;
     color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
     cursor: pointer;
+}
+
+.d-pill:not(.solid):hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.26);
 }
 
 .d-pill.solid {
@@ -277,7 +373,7 @@
 }
 
 .d-stat {
-    background: #ffffff;
+    background: var(--d-card-bg);
     border-radius: 24px;
     padding: 20px;
     display: flex;
@@ -288,7 +384,7 @@
 .d-stat span {
     font-size: 13px;
     font-weight: 600;
-    color: #6f6f78;
+    color: var(--d-text-mute);
 }
 
 .d-stat strong {
@@ -303,13 +399,13 @@
     border-radius: 999px;
     font-size: 12px;
     font-weight: 700;
-    background: #e6f8ee;
-    color: #12874a;
+    background: var(--d-badge-ok-bg);
+    color: var(--d-badge-ok-text);
 }
 
 .d-delta.down {
-    background: #fdebec;
-    color: #c62d3a;
+    background: var(--d-badge-fail-bg);
+    color: var(--d-badge-fail-text);
 }
 
 .d-grid-mid {
@@ -329,7 +425,7 @@
     font-family: inherit;
     font-size: 12px;
     font-weight: 600;
-    fill: #8b8b94;
+    fill: var(--d-text-mute-2);
 }
 
 .d-range {
@@ -337,7 +433,7 @@
     gap: 4px;
     padding: 4px;
     border-radius: 999px;
-    background: #f4f4f6;
+    background: var(--d-surface-2);
     max-width: 100%;
     overflow-x: auto;
     scrollbar-width: none;
@@ -351,23 +447,23 @@
     font: inherit;
     font-size: 13px;
     font-weight: 600;
-    color: #6f6f78;
+    color: var(--d-text-mute);
     cursor: pointer;
     white-space: nowrap;
 }
 
 .d-range button.on {
-    background: #0b0b0c;
-    color: #ffffff;
+    background: var(--d-invert-bg);
+    color: var(--d-invert-text);
 }
 
 /* sync harga dari supplier RSC */
 .d-rsc-box {
     margin-top: 6px;
     padding: 12px 14px;
-    border: 1px solid #eceef3;
+    border: 1px solid var(--d-divider);
     border-radius: 14px;
-    background: #f8f9fc;
+    background: var(--d-surface-2);
 }
 
 .d-rsc-row {
@@ -383,16 +479,16 @@
     gap: 4px;
     font-size: 12px;
     font-weight: 700;
-    color: #6f6f78;
+    color: var(--d-text-mute);
 }
 
 .d-rsc-rate input {
-    border: 1px solid #dfe1ea;
+    border: 1px solid var(--d-divider);
     border-radius: 10px;
     padding: 8px 10px;
     font: inherit;
     font-weight: 700;
-    color: #0b0b0c;
+    color: var(--d-text);
     width: 120px;
 }
 
@@ -407,7 +503,7 @@
     font-weight: 800;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
 }
 
 .d-pack-group:first-child {
@@ -419,7 +515,7 @@
     align-items: center;
     gap: 14px;
     padding: 12px 0;
-    border-top: 1px solid #f0f0f3;
+    border-top: 1px solid var(--d-divider);
     flex-wrap: wrap;
 }
 
@@ -437,7 +533,7 @@
     border-radius: 12px;
     display: grid;
     place-items: center;
-    background: #fff4cc;
+    background: var(--d-badge-wait-bg);
     flex: none;
 }
 
@@ -448,7 +544,7 @@
 
 .d-pack-note {
     font-size: 12px;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
     font-weight: 500;
 }
 
@@ -456,7 +552,7 @@
     margin-left: auto;
     width: 110px;
     padding: 8px 12px;
-    border: 1px solid #e4e4ea;
+    border: 1px solid var(--d-divider);
     border-radius: 12px;
     font: inherit;
     font-size: 13px;
@@ -482,7 +578,7 @@
     gap: 4px;
     font-size: 10.5px;
     font-weight: 700;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
@@ -490,13 +586,13 @@
 .d-pack-fields input {
     width: 90px;
     padding: 8px 10px;
-    border: 1px solid #e4e4ea;
+    border: 1px solid var(--d-divider);
     border-radius: 12px;
     font: inherit;
     font-size: 13px;
     font-weight: 700;
     text-align: right;
-    color: #0b0b0c;
+    color: var(--d-text);
 }
 
 .d-pack-fields input:focus-visible {
@@ -511,14 +607,14 @@
     min-width: 92px;
     padding: 6px 12px;
     border-radius: 12px;
-    background: #f1f3ff;
+    background: var(--d-badge-proc-bg);
     text-align: right;
 }
 
 .d-pack-sell span {
     font-size: 10.5px;
     font-weight: 700;
-    color: #6f6f78;
+    color: var(--d-text-mute);
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
@@ -545,14 +641,14 @@
     padding: 10px 12px;
     font-size: 12px;
     font-weight: 700;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
 
 .d-table td {
     padding: 14px 12px;
-    border-top: 1px solid #f0f0f3;
+    border-top: 1px solid var(--d-divider);
     font-weight: 600;
     white-space: nowrap;
 }
@@ -562,7 +658,7 @@
 }
 
 .d-table tbody tr:hover {
-    background: #fafafc;
+    background: var(--d-hover-bg);
 }
 
 /* Kartu ringkasan dengan ikon (dipakai di halaman Pembayaran: Total masuk /
@@ -589,14 +685,14 @@
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    background: #e6ebff;
+    background: var(--d-badge-proc-bg);
     color: #2540ff;
     font-size: 12px;
     font-weight: 800;
 }
 
 .d-table .mute {
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
     font-weight: 500;
 }
 
@@ -609,23 +705,23 @@
 }
 
 .d-badge.ok {
-    background: #e6f8ee;
-    color: #12874a;
+    background: var(--d-badge-ok-bg);
+    color: var(--d-badge-ok-text);
 }
 
 .d-badge.wait {
-    background: #fff4cc;
-    color: #a06b00;
+    background: var(--d-badge-wait-bg);
+    color: var(--d-badge-wait-text);
 }
 
 .d-badge.proc {
-    background: #e6ebff;
+    background: var(--d-badge-proc-bg);
     color: #2540ff;
 }
 
 .d-badge.fail {
-    background: #fdebec;
-    color: #c62d3a;
+    background: var(--d-badge-fail-bg);
+    color: var(--d-badge-fail-text);
 }
 
 /* skeleton loading — ditampilkan instan oleh Next.js (loading.tsx) begitu
@@ -644,7 +740,7 @@
 }
 
 .skel {
-    background: #e9ebf1;
+    background: var(--d-skel);
     border-radius: 8px;
     animation: skel-pulse 1.3s ease-in-out infinite;
 }
@@ -656,13 +752,13 @@
 .d-empty {
     padding: 32px;
     text-align: center;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
     font-weight: 600;
 }
 
 .d-note {
     font-size: 12px;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
     font-weight: 500;
     margin: 0;
 }
@@ -718,8 +814,8 @@
         height: 40px;
         border: 0;
         border-radius: 12px;
-        background: #f4f4f6;
-        color: #0b0b0c;
+        background: var(--d-surface-2);
+        color: var(--d-text);
         cursor: pointer;
     }
 
@@ -728,22 +824,22 @@
         height: 20px;
     }
 
-    /* Dipakai di admin: AdminSidebar gak punya header bareng kayak dashboard
-     pelanggan, jadi tombol togglenya ngambang sendiri kayak floating action
-     button di pojok kiri-BAWAH (bukan atas, biar gak numpuk sama judul
-     halaman "Halo, Digora" dkk yang mulai dari pojok kiri-atas juga). */
+    /* Ngambang di pojok kiri-ATAS, ngikutin konvensi tombol menu di kebanyakan
+     web/app (orang udah kebiasaan cari hamburger menu di situ, bukan di
+     pojok bawah) — .d-top dikasih padding-left di bawah biar judul halaman
+     ("Halo, Digora" dkk) nggak ketiban tombolnya. */
     .d-menu-btn-fixed {
         display: grid;
         place-items: center;
         position: fixed;
-        bottom: 20px;
+        top: 16px;
         left: 16px;
         width: 48px;
         height: 48px;
         border: 0;
         border-radius: 50%;
-        background: #0b0b0c;
-        color: #ffffff;
+        background: var(--d-invert-bg);
+        color: var(--d-invert-text);
         box-shadow: 0 8px 20px rgba(11, 11, 12, 0.3);
         z-index: 42;
         cursor: pointer;
@@ -758,6 +854,9 @@
         display: flex;
         align-items: flex-start;
         gap: 12px;
+        /* jarak buat tombol menu yang ngambang fixed di pojok kiri-atas
+           (lihat .d-menu-btn-fixed) supaya nggak numpuk sama judul halaman */
+        padding-left: 60px;
     }
 
     .d-side-backdrop {
@@ -804,8 +903,8 @@
         height: 34px;
         border: 0;
         border-radius: 10px;
-        background: #f4f4f6;
-        color: #0b0b0c;
+        background: var(--d-surface-2);
+        color: var(--d-text);
         cursor: pointer;
     }
 
@@ -849,7 +948,7 @@
     margin-bottom: 10px;
     font-size: 13px;
     font-weight: 700;
-    color: #3d3d44;
+    color: var(--d-text);
 }
 
 .u-packs {
@@ -865,9 +964,9 @@
     gap: 8px;
     align-items: flex-start;
     padding: 16px;
-    border: 1.5px solid #ececf0;
+    border: 1.5px solid var(--d-divider);
     border-radius: 18px;
-    background: #ffffff;
+    background: var(--d-card-bg);
     font: inherit;
     text-align: left;
     cursor: pointer;
@@ -883,7 +982,7 @@
 
 .u-pack.on {
     border-color: #2540ff;
-    background: linear-gradient(180deg, #f1f3ff 0%, #eef1ff 100%);
+    background: var(--d-badge-proc-bg);
     box-shadow: 0 8px 20px rgba(37, 64, 255, 0.14);
 }
 
@@ -910,11 +1009,11 @@
     width: 28px;
     height: 28px;
     border-radius: 9px;
-    background: #f4f4f6;
+    background: var(--d-surface-2);
 }
 
 .u-pack.on .u-pack-ico {
-    background: #ffffff;
+    background: var(--d-card-bg);
 }
 
 .u-pack-stars {
@@ -933,20 +1032,20 @@
 }
 
 .u-pack.on .u-pack-price {
-    color: #0b0b0c;
+    color: var(--d-text);
 }
 
 .u-pack-note {
     padding: 2px 8px;
     border-radius: 999px;
-    background: #f4f4f6;
+    background: var(--d-surface-2);
     font-size: 11px;
     font-weight: 700;
-    color: #6f6f78;
+    color: var(--d-text-mute);
 }
 
 .u-pack.on .u-pack-note {
-    background: #ffffff;
+    background: var(--d-card-bg);
     color: #2540ff;
 }
 
@@ -957,20 +1056,20 @@
     flex-wrap: wrap;
     margin-top: 12px;
     padding: 14px 16px;
-    border: 1.5px dashed #d4d4dc;
+    border: 1.5px dashed var(--d-divider);
     border-radius: 16px;
-    background: #fafafb;
+    background: var(--d-hover-bg);
     transition: border-color 0.15s, background 0.15s;
 }
 
 .u-custom.on {
     border: 1.5px solid #2540ff;
-    background: #f1f3ff;
+    background: var(--d-badge-proc-bg);
 }
 
 .u-custom.err {
     border: 1.5px solid #f3c9cc;
-    background: #fff6f6;
+    background: var(--d-badge-fail-bg);
 }
 
 .u-custom-txt {
@@ -987,7 +1086,7 @@
 .u-custom-txt span {
     font-size: 12px;
     font-weight: 500;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
 }
 
 .u-custom-input {
@@ -995,9 +1094,9 @@
     align-items: center;
     gap: 8px;
     padding: 0 14px;
-    border: 1.5px solid #ececf0;
+    border: 1.5px solid var(--d-divider);
     border-radius: 14px;
-    background: #ffffff;
+    background: var(--d-card-bg);
 }
 
 .u-custom-input input {
@@ -1016,7 +1115,7 @@
 .u-custom-input span {
     font-size: 13px;
     font-weight: 600;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
 }
 
 .u-custom-price {
@@ -1026,7 +1125,7 @@
 }
 
 .u-custom-price.bad {
-    color: #c62d3a;
+    color: var(--d-badge-fail-text);
 }
 
 @media (max-width: 560px) {
@@ -1049,22 +1148,22 @@
     padding: 0 16px;
     border: 1.5px solid transparent;
     border-radius: 16px;
-    background: #f4f4f6;
+    background: var(--d-surface-2);
 }
 
 .u-input:focus-within {
     border-color: #2540ff;
-    background: #ffffff;
+    background: var(--d-card-bg);
 }
 
 .u-input.err {
     border-color: #d93a47;
-    background: #fff6f6;
+    background: var(--d-badge-fail-bg);
 }
 
 .u-input span {
     font-weight: 600;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
 }
 
 .u-input input {
@@ -1091,9 +1190,9 @@
     flex-direction: column;
     gap: 2px;
     padding: 12px 16px;
-    border: 1.5px solid #ececf0;
+    border: 1.5px solid var(--d-divider);
     border-radius: 16px;
-    background: #ffffff;
+    background: var(--d-card-bg);
     font: inherit;
     text-align: left;
     cursor: pointer;
@@ -1106,7 +1205,7 @@
 
 .u-pay.on {
     border-color: #2540ff;
-    background: #f1f3ff;
+    background: var(--d-badge-proc-bg);
 }
 
 .u-pay b {
@@ -1116,16 +1215,16 @@
 .u-pay span {
     font-size: 12px;
     font-weight: 500;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
 }
 
 .u-sum {
     position: sticky;
     top: 24px;
     padding: 22px;
-    border: 1.5px solid #ececf0;
+    border: 1.5px solid var(--d-divider);
     border-radius: 20px;
-    background: #ffffff;
+    background: var(--d-card-bg);
     box-shadow: 0 12px 28px rgba(11, 11, 12, 0.05);
 }
 
@@ -1134,7 +1233,7 @@
     font-size: 13px;
     font-weight: 700;
     letter-spacing: -0.01em;
-    color: #6f6f78;
+    color: var(--d-text-mute);
 }
 
 .u-row {
@@ -1144,11 +1243,11 @@
     padding: 8px 0;
     font-size: 14px;
     font-weight: 500;
-    color: #6f6f78;
+    color: var(--d-text-mute);
 }
 
 .u-row b {
-    color: #0b0b0c;
+    color: var(--d-text);
     font-weight: 700;
 }
 
@@ -1196,8 +1295,8 @@
     margin-top: 12px;
     padding: 12px 16px;
     border-radius: 14px;
-    background: #e6f8ee;
-    color: #12874a;
+    background: var(--d-badge-ok-bg);
+    color: var(--d-badge-ok-text);
     font-size: 13.5px;
     font-weight: 600;
     line-height: 1.5;
@@ -1207,8 +1306,8 @@
     margin-top: 12px;
     padding: 12px 16px;
     border-radius: 14px;
-    background: #fdebec;
-    color: #c62d3a;
+    background: var(--d-badge-fail-bg);
+    color: var(--d-badge-fail-text);
     font-size: 13.5px;
     font-weight: 600;
 }
@@ -1227,25 +1326,28 @@
     font-weight: 700;
 }
 
-.u-mini input {
+.u-mini input,
+.u-mini textarea {
     padding: 13px 16px;
     border: 1.5px solid transparent;
     border-radius: 16px;
-    background: #f4f4f6;
+    background: var(--d-surface-2);
     font: inherit;
     /* minimal 16px — di bawah itu Safari iOS otomatis zoom in tiap kali input ini di-tap */
     font-size: 16px;
     font-weight: 500;
+    resize: vertical;
 }
 
-.u-mini input:focus-visible {
+.u-mini input:focus-visible,
+.u-mini textarea:focus-visible {
     outline: none;
     border-color: #2540ff;
-    background: #ffffff;
+    background: var(--d-card-bg);
 }
 
 .u-mini input:disabled {
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
     cursor: not-allowed;
 }
 
@@ -1281,13 +1383,13 @@
     font: inherit;
     font-size: 12.5px;
     font-weight: 700;
-    color: #6f6f78;
+    color: var(--d-text-mute);
     cursor: pointer;
 }
 
 .u-mini-pw .eye:hover {
-    background: #ececf0;
-    color: #0b0b0c;
+    background: var(--d-divider);
+    color: var(--d-text);
 }
 
 .pw-meter {
@@ -1300,7 +1402,7 @@
     flex: 1;
     height: 4px;
     border-radius: 999px;
-    background: #ececf0;
+    background: var(--d-divider);
     font-style: normal;
 }
 
@@ -1317,7 +1419,7 @@
 }
 
 .u-faq details {
-    border-top: 1px solid #f0f0f3;
+    border-top: 1px solid var(--d-divider);
     padding: 14px 0;
 }
 
@@ -1336,7 +1438,7 @@
     font-size: 14px;
     line-height: 1.6;
     font-weight: 500;
-    color: #6f6f78;
+    color: var(--d-text-mute);
 }
 
 .d-main section[id] {
@@ -1369,7 +1471,7 @@
     gap: 4px;
     padding: 4px;
     border-radius: 999px;
-    background: #f4f4f6;
+    background: var(--d-surface-2);
     max-width: 100%;
 }
 
@@ -1381,14 +1483,14 @@
     font: inherit;
     font-size: 14px;
     font-weight: 700;
-    color: #6f6f78;
+    color: var(--d-text-mute);
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
 }
 
 .u-kind button.on {
-    background: #0b0b0c;
-    color: #ffffff;
+    background: var(--d-invert-bg);
+    color: var(--d-invert-text);
     box-shadow: 0 4px 12px rgba(11, 11, 12, 0.18);
 }
 
@@ -1400,7 +1502,7 @@
 .u-pack-stars small {
     font-size: 13px;
     font-weight: 600;
-    color: #6f6f78;
+    color: var(--d-text-mute);
     letter-spacing: 0;
 }
 
@@ -1417,15 +1519,15 @@
 .u-saldo-pill {
     padding: 10px 18px;
     border-radius: 999px;
-    background: #ffffff;
+    background: var(--d-card-bg);
     font-size: 14px;
     font-weight: 600;
-    color: #6f6f78;
+    color: var(--d-text-mute);
 }
 
 .u-saldo-pill b {
     margin-left: 6px;
-    color: #0b0b0c;
+    color: var(--d-text);
 }
 
 .u-saldo-box {
@@ -1434,9 +1536,9 @@
     gap: 14px;
     flex-wrap: wrap;
     padding: 14px 16px;
-    border: 1.5px solid #ececf0;
+    border: 1.5px solid var(--d-divider);
     border-radius: 16px;
-    background: #ffffff;
+    background: var(--d-card-bg);
 }
 
 .u-saldo-box>div {
@@ -1450,20 +1552,20 @@
     width: 38px;
     height: 38px;
     border-radius: 12px;
-    background: #f1f3ff;
+    background: var(--d-badge-proc-bg);
     color: #2540ff;
 }
 
 .u-saldo-box.low .u-saldo-box-ico {
-    background: #ffe4e6;
-    color: #c62d3a;
+    background: var(--d-badge-fail-bg);
+    color: var(--d-badge-fail-text);
 }
 
 .u-saldo-box span {
     display: block;
     font-size: 12px;
     font-weight: 500;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
 }
 
 .u-saldo-box b {
@@ -1474,7 +1576,7 @@
 .u-saldo-box small {
     font-size: 13px;
     font-weight: 600;
-    color: #12874a;
+    color: var(--d-badge-ok-text);
 }
 
 .u-saldo-box a {
@@ -1486,7 +1588,7 @@
 
 .u-saldo-box.low {
     border-color: #f3c9cc;
-    background: #fff6f6;
+    background: var(--d-badge-fail-bg);
 }
 
 .u-go:disabled {
@@ -1526,8 +1628,8 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: #0b0b0c;
-    color: #ffffff;
+    background: var(--d-invert-bg);
+    color: var(--d-invert-text);
     font-style: normal;
     font-size: 12px;
 }
@@ -1544,9 +1646,9 @@
     justify-content: center;
     gap: 5px;
     padding: 18px 10px;
-    border: 1.5px solid #ececf0;
+    border: 1.5px solid var(--d-divider);
     border-radius: 18px;
-    background: #ffffff;
+    background: var(--d-card-bg);
     font: inherit;
     font-size: 20px;
     font-weight: 800;
@@ -1558,7 +1660,7 @@
 .s-amt small {
     font-size: 12px;
     font-weight: 600;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
     letter-spacing: 0;
 }
 
@@ -1569,7 +1671,7 @@
 
 .s-amt.on {
     border-color: #2540ff;
-    background: #f1f3ff;
+    background: var(--d-badge-proc-bg);
     color: #2540ff;
     box-shadow: 0 6px 18px rgba(37, 64, 255, 0.14);
 }
@@ -1584,22 +1686,22 @@
     gap: 8px;
     margin-top: 10px;
     padding: 0 18px;
-    border: 1.5px dashed #d4d4dc;
+    border: 1.5px dashed var(--d-divider);
     border-radius: 18px;
-    background: #ffffff;
+    background: var(--d-card-bg);
     transition: border-color 0.15s, background 0.15s;
 }
 
 .s-custom:focus-within,
 .s-custom.on {
     border: 1.5px solid #2540ff;
-    background: #f1f3ff;
+    background: var(--d-badge-proc-bg);
 }
 
 .s-custom span {
     font-size: 14px;
     font-weight: 700;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
 }
 
 .s-custom input {
@@ -1616,7 +1718,7 @@
 
 .s-custom input::placeholder {
     font-weight: 500;
-    color: #a0a0a8;
+    color: var(--d-text-mute-2);
 }
 
 .s-methods {
@@ -1631,9 +1733,9 @@
     align-items: flex-start;
     gap: 4px;
     padding: 16px;
-    border: 1.5px solid #ececf0;
+    border: 1.5px solid var(--d-divider);
     border-radius: 18px;
-    background: #ffffff;
+    background: var(--d-card-bg);
     font: inherit;
     text-align: left;
     cursor: pointer;
@@ -1647,7 +1749,7 @@
 
 .s-method.on {
     border-color: #2540ff;
-    background: #f1f3ff;
+    background: var(--d-badge-proc-bg);
 }
 
 .s-method:focus-visible,
@@ -1663,8 +1765,8 @@
     height: 40px;
     margin-bottom: 8px;
     border-radius: 12px;
-    background: #f4f4f6;
-    color: #3d3d44;
+    background: var(--d-surface-2);
+    color: var(--d-text);
     transition: background 0.15s, color 0.15s;
 }
 
@@ -1682,7 +1784,7 @@
     font-size: 12px;
     line-height: 1.4;
     font-weight: 500;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
 }
 
 .s-sum h2 {
@@ -1703,7 +1805,7 @@
     align-items: center;
     gap: 14px;
     padding: 14px 0;
-    border-top: 1px solid #f0f0f3;
+    border-top: 1px solid var(--d-divider);
 }
 
 .s-mut li:first-child {
@@ -1720,17 +1822,17 @@
 }
 
 .s-mut-ico.in {
-    background: #e6f8ee;
-    color: #12874a;
+    background: var(--d-badge-ok-bg);
+    color: var(--d-badge-ok-text);
 }
 
 .s-mut-ico.out {
-    background: #f4f4f6;
-    color: #6f6f78;
+    background: var(--d-surface-2);
+    color: var(--d-text-mute);
 }
 
 .s-mut-ico.wait {
-    background: #fff4cc;
+    background: var(--d-badge-wait-bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1750,7 +1852,7 @@
 .s-mut-txt span {
     font-size: 12.5px;
     font-weight: 500;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
 }
 
 .s-mut strong {
@@ -1760,7 +1862,7 @@
 }
 
 .s-mut strong.in {
-    color: #12874a;
+    color: var(--d-badge-ok-text);
 }
 
 /* ───── kartu "menunggu pembayaran" (isi saldo lewat Paymenku) ───── */
@@ -1791,7 +1893,7 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    border: 3px solid #e4e4ea;
+    border: 3px solid var(--d-divider);
     border-top-color: #2540ff;
     animation: s-pay-spin 0.8s linear infinite;
 }
@@ -1802,9 +1904,9 @@
     align-items: center;
     gap: 10px;
     padding: 16px;
-    border: 1.5px solid #ececf0;
+    border: 1.5px solid var(--d-divider);
     border-radius: 20px;
-    background: #fafafb;
+    background: var(--d-hover-bg);
 }
 
 .s-qr-box img {
@@ -1818,12 +1920,12 @@
     font: inherit;
     font-size: 13px;
     font-weight: 700;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
     cursor: pointer;
 }
 
 .s-pay-cancel:hover {
-    color: #c62d3a;
+    color: var(--d-badge-fail-text);
 }
 
 @media (max-width: 1100px) {
@@ -1895,7 +1997,7 @@
     gap: 6px;
     font-size: 13px;
     font-weight: 700;
-    color: #d4d4dc;
+    color: var(--d-divider);
 }
 
 .admin-login-card input {
@@ -2013,15 +2115,343 @@
     margin: -4px 0 4px;
 }
 
+/* dropdown kategori/layanan di SmmView — lebih ringkas dari grid kartu buat
+   katalog yang bisa banyak baris (beda dari paket Stars/Premium yang cuma
+   segelintir tier) */
+.u-select {
+    width: 100%;
+    padding: 13px 16px;
+    border: 1.5px solid transparent;
+    border-radius: 16px;
+    background: var(--d-surface-2);
+    font: inherit;
+    /* minimal 16px — dipakai juga di <input> combobox pencarian layanan,
+       di bawah itu Safari iOS otomatis zoom in tiap kali di-tap */
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--d-text);
+}
+
+.u-select:focus-visible {
+    outline: 2px solid #2540ff;
+    border-color: transparent;
+}
+
+/* combobox "cari layanan" di SmmView — ganti <select> native yang nggak
+   praktis dicari manual kalau opsinya ratusan & teksnya mirip-mirip */
+.u-combo {
+    position: relative;
+}
+
+.u-combo-list {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    max-height: 280px;
+    overflow-y: auto;
+    background: var(--d-card-bg);
+    border: 1px solid var(--d-divider);
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(11, 11, 12, 0.14);
+    padding: 6px;
+}
+
+.u-combo-opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    font: inherit;
+    font-size: 13.5px;
+    color: var(--d-text);
+    cursor: pointer;
+}
+
+.u-combo-opt svg {
+    flex: none;
+}
+
+.u-combo-opt:hover {
+    background: var(--d-surface-2);
+}
+
+.u-combo-opt.on {
+    background: var(--d-badge-proc-bg);
+    color: #2540ff;
+    font-weight: 700;
+}
+
+.u-combo-empty {
+    padding: 12px;
+    font-size: 13px;
+    color: var(--d-text-mute-2);
+    text-align: center;
+}
+
+/* baris filter platform di SmmView — pill per platform, kolom rata (auto-fill)
+   biar ujung kanan tiap baris rapi, nggak nyisain celah kosong yang ganjil */
+.u-platform-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+}
+
+.u-platform {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--d-divider);
+    border-radius: 999px;
+    background: var(--d-card-bg);
+    font: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--d-text);
+    cursor: pointer;
+    text-align: center;
+}
+
+.u-platform:hover {
+    border-color: #c9d1ff;
+}
+
+.u-platform.on {
+    border-color: #2540ff;
+    background: #2540ff;
+    color: #ffffff;
+}
+
+/* kotak detail layanan terpilih di SmmView — mirip tampilan panel provider
+   (stat ringkas + daftar deskripsi), tapi isinya cuma data asli yang memang
+   ada (nama layanan dipecah per segmen + kecepatan dari teks nama + status
+   garansi), bukan data yang di-fabrikasi. */
+.s-detail {
+    margin-top: 12px;
+    padding: 16px;
+    border-radius: 20px;
+    background: var(--d-surface-2);
+}
+
+.s-detail-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.s-detail-stat {
+    background: var(--d-card-bg);
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+}
+
+.s-detail-stat span {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--d-text-mute-2);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.s-detail-stat b {
+    font-size: 14px;
+}
+
+.s-detail-stat b.ok {
+    color: var(--d-badge-ok-text);
+}
+
+.s-detail-desc b {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.s-detail-desc ul {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--d-text-mute);
+}
+
+.s-detail-notes {
+    margin-top: 12px;
+}
+
+.s-detail-notes ul {
+    color: var(--d-badge-wait-text);
+}
+
+@media (max-width: 560px) {
+    .s-detail-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* tombol-tombol aksi di kolom terakhir tabel pesanan admin */
+.d-order-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+/* .d-pill defaultnya didesain buat di atas background gelap/gradient (kartu
+   saldo, kotak sync RSC, dst) — teks & background-nya putih/transparan. Di
+   dalam tabel manapun (baris putih polos, mis. Pesanan & Pelanggan) itu bikin
+   tombolnya nyaris tak kelihatan, jadi di-override kontrasnya khusus di sini. */
+.d-table .d-pill {
+    background: var(--d-surface-2);
+    color: var(--d-text);
+}
+
+.d-table .d-pill:hover:not(:disabled) {
+    background: var(--d-divider);
+}
+
+/* form inline "Ubah saldo" di baris tabel Pelanggan */
+.d-saldo-adjust {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.d-saldo-adjust .u-input {
+    flex: 1;
+    min-width: 160px;
+    max-width: 240px;
+}
+
 /* link "Lihat semua" di kartu pesanan terbaru (BerandaView) */
 .d-see-all {
+    font: inherit;
     color: #2540ff;
     font-weight: 700;
     font-size: 14px;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
 }
 
 .d-see-all:hover {
     text-decoration: underline;
+}
+
+/* legenda warna di kartu grafik (halaman Statistik admin) */
+.trend-legend {
+    display: flex;
+    gap: 16px;
+}
+
+.trend-legend span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--d-text-mute);
+}
+
+.trend-legend i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+/* baris breakdown (status pesanan / jenis produk) di halaman Statistik admin */
+.stat-bar-row {
+    padding: 12px 0;
+    border-top: 1px solid var(--d-divider);
+}
+
+.stat-bar-row:first-child {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.stat-bar-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 13.5px;
+}
+
+.stat-bar-top span {
+    color: var(--d-text-mute);
+    font-weight: 500;
+}
+
+.stat-bar-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--d-divider);
+    overflow: hidden;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+}
+
+/* tooltip hover grafik Statistik admin (Recharts <Tooltip content={...}>) */
+.chart-tooltip {
+    background: var(--d-card-bg);
+    border: 1px solid var(--d-divider);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(11, 11, 12, 0.14);
+    padding: 10px 14px;
+    font-size: 13px;
+}
+
+.chart-tooltip > b {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--d-text-mute-2);
+    font-weight: 700;
+}
+
+.chart-tooltip-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 2px 0;
+}
+
+.chart-tooltip-row span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--d-text-mute);
+}
+
+.chart-tooltip-row i {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
 }
 
 /* status pengecekan username Telegram di StarsView */
@@ -2030,13 +2460,201 @@
     margin-top: 6px;
     font-size: 12.5px;
     font-weight: 600;
-    color: #8b8b94;
+    color: var(--d-text-mute-2);
 }
 
 .u-status.ok {
-    color: #12874a;
+    color: var(--d-badge-ok-text);
 }
 
 .u-status.bad {
-    color: #c62d3a;
+    color: var(--d-badge-fail-text);
+}
+
+/* Fitur Tiket Support (halaman Bantuan pelanggan + /admin/tiket) */
+.tk-new-form {
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--d-divider);
+}
+
+.tk-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tk-list-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    text-align: left;
+    padding: 14px 16px;
+    border: 1.5px solid transparent;
+    border-radius: 16px;
+    background: var(--d-surface-2);
+    font: inherit;
+    cursor: pointer;
+}
+
+.tk-list-item:hover {
+    border-color: #2540ff;
+    background: var(--d-card-bg);
+}
+
+.tk-list-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.tk-list-preview {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tk-thread {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.tk-thread-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.tk-thread-head b {
+    flex: 1;
+}
+
+.tk-thread-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.tk-bubbles {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 4px 2px;
+}
+
+.tk-bubble {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    background: var(--d-surface-2);
+}
+
+.tk-bubble p {
+    margin: 0 0 4px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.tk-bubble span {
+    font-size: 11.5px;
+    color: var(--d-text-mute-2);
+    font-weight: 600;
+}
+
+.tk-bubble.me {
+    align-self: flex-end;
+    background: #2540ff;
+    color: #ffffff;
+}
+
+.tk-bubble.me span {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.tk-bubble.admin {
+    align-self: flex-start;
+}
+
+.tk-reply {
+    display: flex;
+    gap: 10px;
+}
+
+.tk-reply input {
+    flex: 1;
+    padding: 13px 16px;
+    border: 1.5px solid transparent;
+    border-radius: 16px;
+    background: var(--d-surface-2);
+    font: inherit;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.tk-reply input:focus-visible {
+    outline: none;
+    border-color: #2540ff;
+    background: var(--d-card-bg);
+}
+
+.tk-attach-btn {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border: 1.5px solid transparent;
+    border-radius: 16px;
+    background: var(--d-surface-2);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.tk-attach-btn:hover {
+    border-color: #2540ff;
+    background: var(--d-card-bg);
+}
+
+.tk-attach-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: -4px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: var(--d-surface-2);
+    font-size: 13px;
+    font-weight: 600;
+    width: fit-content;
+}
+
+.tk-attach-preview button {
+    border: 0;
+    background: none;
+    color: var(--d-text-mute-2);
+    font: inherit;
+    cursor: pointer;
+}
+
+.tk-closed-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 0 4px;
+    text-align: center;
+}
+
+.tk-bubble-img {
+    display: block;
+    max-width: 220px;
+    max-height: 220px;
+    width: 100%;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    object-fit: cover;
 }
