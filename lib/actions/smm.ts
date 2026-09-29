@@ -146,7 +146,14 @@ export async function buySmmOrderAction(input: {
         p_target_link: link,
         p_quantity: quantity,
     });
-    if (error) return { error: friendlySmmDbError(error.message) };
+    if (error) {
+        // Pesan asli dari RPC sebelumnya TIDAK PERNAH kelogging di sini sama
+        // sekali — kalau errornya nggak kena salah satu pola di
+        // friendlySmmDbError, satu-satunya cara tau penyebab aslinya ya dari
+        // sini (server-side, nggak pernah dikirim balik ke customer).
+        console.error("[smm-order] buy_smm_with_saldo gagal:", error.message, JSON.stringify(error));
+        return { error: friendlySmmDbError(error.message) };
+    }
 
     const order = data as { id?: string; order_code?: string } | null;
 

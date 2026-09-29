@@ -85,9 +85,11 @@ export default function AuthForm({ mode, onSwitch }: { mode: Mode; onSwitch?: ()
                 setAlert({ ok: false, text: error });
                 return;
             }
-            // dibaca langsung dari URL (bukan hook) supaya halaman ini tidak perlu Suspense boundary
-            const next = new URLSearchParams(window.location.search).get("next");
-            router.push(next || "/dashboard");
+            // Selalu ke Beranda dulu abis login, BUKAN ke "next" (halaman yang
+            // tadinya mau dibuka pas belum login) — biar konsisten sama alur
+            // daftar akun baru (yang juga selalu ke Beranda), bukan nyasar ke
+            // menu lain.
+            router.push("/dashboard");
             router.refresh();
         } catch {
             setAlert({ ok: false, text: "Tidak bisa terhubung ke server. Coba lagi." });
