@@ -49,7 +49,6 @@ export default function StarsView({ catalog, saldo }: { catalog: PackageRow[]; s
     const [err, setErr] = useState("");
     const [buying, setBuying] = useState(false);
     const [tg, setTg] = useState<{ state: "idle" | "checking" | "ok" | "bad" | "unknown"; msg: string }>({ state: "idle", msg: "" });
-    const [done, setDone] = useState<string | null>(null);
 
     // validasi username: format langsung, lalu cek ke Telegram (ditunda 600 ms setelah berhenti mengetik)
     useEffect(() => {
@@ -106,7 +105,6 @@ export default function StarsView({ catalog, saldo }: { catalog: PackageRow[]; s
 
     async function submit(e: React.FormEvent) {
         e.preventDefault();
-        setDone(null);
         if (isCustom && customStarsNum < MIN_CUSTOM_STARS) {
             setErr(`Jumlah Stars minimal ${num(MIN_CUSTOM_STARS)}.`);
             return;
@@ -147,9 +145,10 @@ export default function StarsView({ catalog, saldo }: { catalog: PackageRow[]; s
             setErr(res.error);
             return;
         }
-        setDone(`Pesanan ${res.orderCode ?? ""} dibayar dengan saldo. ${pack.label} sedang dikirim ke @${u}.`);
-        setTo("");
-        setTg({ state: "idle", msg: "" });
+        // Redirect ke Pesanan Saya alih-alih nampilin pesan sukses inline —
+        // sama alasan kayak SmmView.tsx: pesan inline gampang ke-lewat, di
+        // Pesanan Saya order barunya jelas kelihatan sebagai baris paling atas.
+        router.push("/dashboard/riwayat");
         router.refresh();
     }
 
@@ -176,7 +175,6 @@ export default function StarsView({ catalog, saldo }: { catalog: PackageRow[]; s
                                     setKind(k);
                                     setPackIdx(k === "stars" ? 3 : 1);
                                     setCustomStars("");
-                                    setDone(null);
                                     setErr("");
                                 }}
                             >
@@ -323,7 +321,6 @@ export default function StarsView({ catalog, saldo }: { catalog: PackageRow[]; s
                         >
                             {buying ? "Memproses…" : "Beli dengan saldo"}
                         </button>
-                        {done && <div className="u-ok">{done}</div>}
                     </div>
                 </div>
             </form>

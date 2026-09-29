@@ -271,7 +271,6 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
     const [quantity, setQuantity] = useState("");
     const [err, setErr] = useState("");
     const [buying, setBuying] = useState(false);
-    const [done, setDone] = useState<string | null>(null);
 
     function pickPlatform(key: string) {
         setPlatform(key);
@@ -281,7 +280,6 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
         setCategoryQuery("");
         setServiceQuery("");
         setQuantity("");
-        setDone(null);
         setErr("");
     }
 
@@ -293,7 +291,6 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
         setCategoryOpen(false);
         setServiceQuery("");
         setQuantity("");
-        setDone(null);
         setErr("");
     }
 
@@ -302,7 +299,6 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
         setServiceQuery("");
         setServiceOpen(false);
         setQuantity("");
-        setDone(null);
         setErr("");
     }
 
@@ -314,7 +310,6 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
 
     async function submit(e: React.FormEvent) {
         e.preventDefault();
-        setDone(null);
         if (!service) {
             setErr("Pilih layanan dulu.");
             return;
@@ -339,9 +334,11 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
             setErr(res.error);
             return;
         }
-        setDone(`Pesanan ${res.orderCode ?? ""} dibayar dengan saldo. Sedang diproses.`);
-        setLink("");
-        setQuantity("");
+        // Redirect ke Pesanan Saya alih-alih nampilin pesan sukses inline di
+        // halaman ini — pesan inline gampang ke-lewat kalau posisi scroll-nya
+        // nggak pas, sedangkan di Pesanan Saya order barunya jelas kelihatan
+        // sebagai baris paling atas.
+        router.push("/dashboard/riwayat");
         router.refresh();
     }
 
@@ -611,7 +608,6 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
                             {buying ? "Memproses…" : "Beli dengan saldo"}
                         </button>
                         {err && <div className="u-bad">{err}</div>}
-                        {done && <div className="u-ok">{done}</div>}
                     </div>
                 </div>
             </form>

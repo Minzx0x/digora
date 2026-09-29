@@ -231,12 +231,19 @@ export async function cancelSmmflareOrder(providerOrderId: number): Promise<{ ca
 // Normalisasi status mentah smmflare ke status internal Digora (ok/proc/wait/fail).
 // "Partial" dianggap "ok" (terkirim cukup) bukan "proc" — biar customer nggak
 // nyangka pesanannya masih jalan padahal sudah macet di tengah jalan.
+//
+// "wait" TIDAK PERNAH dipetakan ke sini SAMA SEKALI (beda dari mapRscStatus) —
+// "wait" di Digora artinya "Menunggu bayar" (customer belum bayar), sedangkan
+// order SMM SELALU sudah dibayar (saldo kepotong sinkron) SEBELUM order-nya
+// diteruskan ke smmflare sama sekali. "Pending" dari smmflare artinya "masih
+// antre di supplier, belum diproses" -- itu tetap "Diproses" dari sudut
+// pandang Digora, BUKAN "menunggu bayar". Sempat salah dipetakan ke "wait"
+// dan bikin order yang udah lunas kelihatan seolah belum dibayar.
 export function mapSmmflareStatus(rawStatus: string): "ok" | "proc" | "wait" | "fail" {
     const s = rawStatus.toLowerCase();
     if (["completed", "partial"].includes(s)) return "ok";
     if (["canceled", "cancelled", "refunded", "failed"].includes(s)) return "fail";
-    if (["pending"].includes(s)) return "wait";
-    return "proc"; // "in progress", "processing", dst
+    return "proc"; // "pending", "in progress", "processing", dst
 }
 
 export { SmmflareError };
