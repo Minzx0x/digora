@@ -192,7 +192,7 @@ const MIN_DEPOSIT_AMOUNT = 10000;
 // supaya nominal yang benar-benar ditagihkan ke Paymenku tidak beda dengan
 // yang dilihat user sebelum klik "Isi saldo sekarang".
 function depositFee(method: DepositMethod, amount: number): number {
-    if (method === "qris") return Math.round(amount * 0.007);
+    if (method === "qris") return Math.round(amount * 0.007) + 200;
     if (method === "ewallet") return 1500;
     return 3000;
 }

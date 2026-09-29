@@ -108,7 +108,7 @@ export default function SaldoView({
     }
 
     const depValue = depCustom ? Number(depCustom) : depAmount;
-    const depFee = depPay === "qris" ? Math.round(depValue * 0.007) : depPay === "ewallet" ? 1500 : 3000;
+    const depFee = depPay === "qris" ? Math.round(depValue * 0.007) + 200 : depPay === "ewallet" ? 1500 : 3000;
 
     async function deposit(e: React.FormEvent) {
         e.preventDefault();
