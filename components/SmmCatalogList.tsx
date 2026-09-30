@@ -158,7 +158,7 @@ export default function SmmCatalogList({ services }: { services: SmmServiceRow[]
                                     <td>
                                         <b>{rp(s.pricePer1000)}</b>/K
                                     </td>
-                                    <td className="mute">
+                                    <td className={e && e.sampleSize > 0 && e.avgMinutes !== null ? "u-eta-ok" : "mute"}>
                                         {etaLoading && !e
                                             ? "…"
                                             : e && e.sampleSize > 0 && e.avgMinutes !== null

@@ -212,7 +212,8 @@
     border-radius: 16px;
     background: #f4f4f6;
     font: inherit;
-    font-size: 15px;
+    /* minimal 16px — di bawah itu Safari iOS otomatis zoom in tiap kali input ini di-tap */
+    font-size: 16px;
     font-weight: 500;
     color: #0b0b0c;
     transition: border-color 0.15s, background 0.15s;

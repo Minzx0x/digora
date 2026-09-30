@@ -219,7 +219,7 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
                         <input
                             className="d-search"
                             type="search"
-                            placeholder="Cari nama layanan (mis. Instagram Followers)"
+                            placeholder="Cari nama layanan atau ID (mis. Instagram Followers / 11034)"
                             aria-label="Cari layanan smmflare"
                             value={q}
                             onChange={(e) => setQ(e.target.value)}

@@ -480,7 +480,7 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
                             <div className="s-detail-stats">
                                 <div className="s-detail-stat">
                                     <span>{eta.sampleSize > 0 || quantityNum > 0 ? "Estimasi selesai" : "Kecepatan"}</span>
-                                    <b>
+                                    <b className={eta.sampleSize > 0 && eta.avgMinutes !== null ? "ok" : ""}>
                                         {eta.sampleSize > 0 && eta.avgMinutes !== null
                                             ? formatMinutes(eta.avgMinutes)
                                             : estimateEta(service.name, quantityNum)}

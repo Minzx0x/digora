@@ -107,7 +107,14 @@ export async function searchSmmflareServicesAction(
     try {
         const all = await getSmmflareServices();
         const q = query.trim().toLowerCase();
-        const filtered = q ? all.filter((s) => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q)) : all;
+        // Query angka murni (mis. "11034") ditujukan buat cari service ID
+        // persis, bukan cocokin sebagian teks nama/kategori — beda dari
+        // pencarian kata kunci biasa di bawah.
+        const filtered = !q
+            ? all
+            : /^\d+$/.test(q)
+              ? all.filter((s) => String(s.serviceId) === q)
+              : all.filter((s) => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q));
         return { error: null, results: filtered.slice(0, 200) };
     } catch (e) {
         return { error: e instanceof SmmflareError ? e.message : "Gagal ambil daftar layanan dari supplier.", results: [] };
