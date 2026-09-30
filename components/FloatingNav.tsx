@@ -25,6 +25,9 @@ export default function FloatingNav() {
     return (
         <div className={`nav-float ${show ? "show" : ""}`} style={{ zoom: z }} inert={!show} aria-hidden={!show}>
             <Nav />
+            <a className="btn-dark nav-float-cta" href="/daftar">
+                Daftar
+            </a>
         </div>
     );
 }

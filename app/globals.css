@@ -23,6 +23,22 @@ a {
   text-decoration: none;
 }
 
+/* Ikon logo (Brand.tsx) -- hitam polos secara default (landing page, legal
+   page, dashboard mode terang). Dua pengecualian: "light" (dipasang di atas
+   background gelap -- Footer/AuthShell/AdminLoginForm) dan dashboard mode
+   gelap, dua-duanya tetap warna asli logonya (biru/putih) biar kebaca. */
+.brand-icon {
+  filter: brightness(0);
+}
+
+.brand-icon-light {
+  filter: none;
+}
+
+:root[data-theme="dark"] .brand-icon-themed {
+  filter: none;
+}
+
 .page {
   min-height: 100vh;
   padding: 12px;
@@ -37,7 +53,13 @@ a {
 
 .card {
   position: relative;
-  background: #ffffff;
+  background-color: #ffffff;
+  /* gradasi lembut di pojok (bukan pattern berulang/glow keras) -- posisinya
+     di pojok kanan-atas & kiri-bawah, area yang relatif kosong dari teks,
+     opacity rendah biar kontras judul (hitam) tetap aman. */
+  background-image: radial-gradient(65% 55% at 100% 0%, rgba(37, 64, 255, 0.28), transparent 75%),
+    radial-gradient(60% 50% at 0% 100%, rgba(130, 90, 255, 0.22), transparent 75%);
+  background-repeat: no-repeat;
   border-radius: 32px;
   overflow: hidden;
 }
@@ -118,6 +140,17 @@ a {
 /* mobile layout */
 .m-card {
   padding-bottom: 36px;
+  /* Isi penuh tinggi layar (dikurangi padding .page 12px atas+bawah) --
+     tanpa ini kartu cuma setinggi kontennya sendiri, dan karena .page nge-
+     center konten secara vertikal, sisa layar di atas/bawah kartu jadi
+     terlihat kosong (hitam) di HP -- persis yang dikeluhkan user. dvh
+     dipakai di atas vh biar akurat juga di Safari iOS/Chrome Android yang
+     address bar-nya collapse (100vh di situ suka ke-hitung kegedean/kekecilan). */
+  min-height: calc(100vh - 24px);
+  min-height: calc(100dvh - 24px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .m-top {
@@ -125,6 +158,14 @@ a {
   align-items: center;
   justify-content: space-between;
   padding: 20px 20px 4px;
+}
+
+.m-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 36px;
 }
 
 .m-text {
@@ -151,6 +192,20 @@ a {
   padding: 24px 24px 0;
 }
 
+.m-text-center {
+  text-align: center;
+}
+
+/* aksen "Digora" inline di judul hero (ikon diamond + nama brand) */
+.hero-cta-row {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
 /* menu melayang setelah hero */
 .nav-float {
   position: fixed;
@@ -159,7 +214,9 @@ a {
   right: 0;
   z-index: 50;
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 10px;
   pointer-events: none;
   opacity: 0;
   transform: translateY(-12px);
@@ -172,13 +229,18 @@ a {
 }
 
 .nav-float .nav {
-  pointer-events: auto;
   background: rgba(244, 244, 246, 0.92);
   backdrop-filter: blur(12px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
 }
 
-.nav-float:not(.show) .nav {
+.nav-float .nav,
+.nav-float .nav-float-cta {
+  pointer-events: auto;
+}
+
+.nav-float:not(.show) .nav,
+.nav-float:not(.show) .nav-float-cta {
   pointer-events: none;
 }
 

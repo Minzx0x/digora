@@ -9,6 +9,16 @@ const nextConfig = {
     logging: {
         serverFunctions: false,
     },
+    // Default Next.js buat body Server Action cuma 1MB -- kepentok pas kirim
+    // lampiran foto tiket (maks 5MB, lihat MAX_ATTACHMENT_BYTES di
+    // lib/actions/tickets.ts), munculnya "Body exceeded 1 MB limit" dan
+    // request-nya gagal total (500). Dinaikin ke 8mb biar ada ruang lebih
+    // dari cukup buat file 5MB + overhead multipart + field lain di form.
+    experimental: {
+        serverActions: {
+            bodySizeLimit: "8mb",
+        },
+    },
 };
 
 export default nextConfig;

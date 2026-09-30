@@ -15,6 +15,16 @@ import {
 
 const STATUS_LABEL: Record<TicketStatus, string> = { open: "Terbuka", closed: "Ditutup" };
 
+// Kategori/subkategori tiket baru — biar admin langsung tau konteksnya tanpa
+// baca ulang pesannya. "Order ID" cuma relevan buat kategori Pesanan, jadi
+// field-nya disembunyiin di kategori lain.
+const CATEGORIES: { label: string; subs: string[] }[] = [
+    { label: "Pesanan", subs: ["Refill", "Batalkan", "Percepat", "Lainnya"] },
+    { label: "Pembayaran", subs: ["Deposit belum masuk", "Salah nominal", "Lainnya"] },
+    { label: "Akun", subs: ["Lupa password", "Ubah email", "Lainnya"] },
+    { label: "Lainnya", subs: ["Lainnya"] },
+];
+
 function timeAgo(iso: string): string {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
@@ -46,10 +56,21 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [showNewForm, setShowNewForm] = useState(false);
-    const [newSubject, setNewSubject] = useState("");
+    const [newCategory, setNewCategory] = useState(CATEGORIES[0].label);
+    const [newSubcategory, setNewSubcategory] = useState(CATEGORIES[0].subs[0]);
+    const [newOrderId, setNewOrderId] = useState("");
     const [newMessage, setNewMessage] = useState("");
+    const [newFile, setNewFile] = useState<File | null>(null);
     const [creating, setCreating] = useState(false);
     const [err, setErr] = useState("");
+    const newFileInputRef = useRef<HTMLInputElement>(null);
+
+    function pickCategory(label: string) {
+        const cat = CATEGORIES.find((c) => c.label === label);
+        setNewCategory(label);
+        setNewSubcategory(cat?.subs[0] ?? "");
+        if (label !== "Pesanan") setNewOrderId("");
+    }
 
     async function refreshTickets() {
         const list = await getMyTicketsAction();
@@ -95,19 +116,28 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
     async function submitNewTicket(e: React.FormEvent) {
         e.preventDefault();
         setErr("");
-        if (!newSubject.trim() || !newMessage.trim()) {
-            setErr("Isi subjek dan pesan dulu.");
+        if (!newMessage.trim()) {
+            setErr("Isi pesan dulu.");
             return;
         }
         setCreating(true);
-        const res = await createTicketAction({ subject: newSubject.trim(), message: newMessage.trim() });
+        const res = await createTicketAction({
+            subject: `${newCategory} — ${newSubcategory}`,
+            message: newMessage.trim(),
+            category: newCategory,
+            subcategory: newSubcategory,
+            orderId: newOrderId,
+            file: newFile,
+        });
         setCreating(false);
         if (res.error) {
             setErr(res.error);
             return;
         }
-        setNewSubject("");
+        pickCategory(CATEGORIES[0].label);
         setNewMessage("");
+        setNewFile(null);
+        if (newFileInputRef.current) newFileInputRef.current.value = "";
         setShowNewForm(false);
         await refreshTickets();
         if (res.ticketId) openTicket(res.ticketId);
@@ -138,9 +168,41 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
             {!selectedId && showNewForm && (
                 <form className="u-mini tk-new-form" onSubmit={submitNewTicket}>
                     <label>
-                        Subjek
-                        <input value={newSubject} onChange={(e) => setNewSubject(e.target.value)} placeholder="Ringkasan masalah kamu" />
+                        Kategori
+                        <div className="tk-seg">
+                            {CATEGORIES.map((c) => (
+                                <button
+                                    key={c.label}
+                                    type="button"
+                                    className={`tk-seg-btn${newCategory === c.label ? " active" : ""}`}
+                                    onClick={() => pickCategory(c.label)}
+                                >
+                                    {c.label}
+                                </button>
+                            ))}
+                        </div>
                     </label>
+                    <label>
+                        Subkategori
+                        <div className="tk-seg">
+                            {(CATEGORIES.find((c) => c.label === newCategory)?.subs ?? []).map((s) => (
+                                <button
+                                    key={s}
+                                    type="button"
+                                    className={`tk-seg-btn${newSubcategory === s ? " active" : ""}`}
+                                    onClick={() => setNewSubcategory(s)}
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                    </label>
+                    {newCategory === "Pesanan" && (
+                        <label>
+                            Order ID <span className="tk-order-note">(opsional)</span>
+                            <input value={newOrderId} onChange={(e) => setNewOrderId(e.target.value)} placeholder="Contoh: ORD-12345" />
+                        </label>
+                    )}
                     <label>
                         Pesan
                         <textarea
@@ -150,6 +212,21 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
                             placeholder="Jelasin kendalanya di sini…"
                         />
                     </label>
+                    <input
+                        ref={newFileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        hidden
+                        onChange={(e) => setNewFile(e.target.files?.[0] ?? null)}
+                    />
+                    <button
+                        type="button"
+                        className="tk-seg-btn"
+                        style={{ alignSelf: "flex-start" }}
+                        onClick={() => newFileInputRef.current?.click()}
+                    >
+                        📎 {newFile ? newFile.name : "Lampirkan foto"}
+                    </button>
                     <button className="d-btn" type="submit" disabled={creating}>
                         {creating ? "Mengirim…" : "Kirim tiket"}
                     </button>
@@ -177,7 +254,10 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
                         <button type="button" className="d-see-all" onClick={() => setSelectedId(null)}>
                             ← Kembali
                         </button>
-                        <b>{selected?.subject}</b>
+                        <div className="tk-thread-title">
+                            <b>{selected?.subject}</b>
+                            {selected?.orderId && <span className="mute d-mute-xs">Order ID: {selected.orderId}</span>}
+                        </div>
                         {selected?.status === "open" && (
                             <button type="button" className="d-pill solid" onClick={doClose}>
                                 Tutup tiket

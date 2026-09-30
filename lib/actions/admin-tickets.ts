@@ -8,6 +8,9 @@ export type AdminTicketRow = {
     id: string;
     subject: string;
     status: TicketStatus;
+    category: string | null;
+    subcategory: string | null;
+    orderId: string | null;
     userName: string;
     userEmail: string;
     lastMessage: string;
@@ -23,7 +26,7 @@ export async function getAdminTicketsData(): Promise<{ isAdmin: boolean; tickets
 
     const { data: ticketsRaw } = await supabase
         .from("tickets")
-        .select("id, user_id, subject, status, created_at, updated_at")
+        .select("id, user_id, subject, status, category, subcategory, order_id, created_at, updated_at")
         .order("updated_at", { ascending: false })
         .limit(500);
 
@@ -57,6 +60,9 @@ export async function getAdminTicketsData(): Promise<{ isAdmin: boolean; tickets
             id: t.id as string,
             subject: t.subject as string,
             status: t.status as TicketStatus,
+            category: t.category as string | null,
+            subcategory: t.subcategory as string | null,
+            orderId: t.order_id as string | null,
             userName: profileMap.get(t.user_id as string)?.name || "(tanpa nama)",
             userEmail: profileMap.get(t.user_id as string)?.email || "-",
             lastMessage: last?.message?.trim() ? last.message : last?.attachmentPath ? "📷 Foto" : "",

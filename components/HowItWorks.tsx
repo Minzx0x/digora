@@ -1,5 +1,6 @@
 import Reveal from "./Reveal";
-import { StarCoin, RpCoin, BoltCoin } from "./Coins";
+import { FaBagShopping, FaWallet, FaBolt } from "react-icons/fa6";
+import IconBadge from "./IconBadge";
 
 const art = { position: "absolute", right: 14, top: 10 } as const;
 
@@ -8,19 +9,19 @@ const STEPS = [
         n: "1",
         title: "Pilih produk",
         text: "Stars & Premium buat Telegram, atau layanan SMM Panel buat Instagram, TikTok, YouTube, dan lainnya.",
-        art: <StarCoin className="float-slow" scale={0.4} style={{ ...art, right: 20 }} />,
+        art: <IconBadge icon={FaBagShopping} bg="#2540ff" className="float-slow" style={art} />,
     },
     {
         n: "2",
         title: "Isi tujuan & bayar",
         text: "Masukkan username Telegram atau link/username akun media sosial tujuan, pilih metode pembayaran, lalu selesaikan pembayaran.",
-        art: <RpCoin className="float" scale={0.5} style={art} />,
+        art: <IconBadge icon={FaWallet} bg="#12874a" className="float" style={art} />,
     },
     {
         n: "3",
         title: "Diproses otomatis",
         text: "Pesanan dikirim/diproses otomatis begitu pembayaranmu terkonfirmasi.",
-        art: <BoltCoin className="float-slow" scale={0.58} style={{ ...art, right: 10, top: 14 }} />,
+        art: <IconBadge icon={FaBolt} bg="#f5a623" color="#0e0d3a" className="float-slow" style={art} />,
     },
 ];
 

@@ -1,5 +1,6 @@
 import Reveal from "./Reveal";
-import { RpCoin, StarCoin, GiftCoin, BoltCoin } from "./Coins";
+import { FaTag, FaReceipt, FaBolt, FaTelegram, FaHeart } from "react-icons/fa6";
+import IconBadge from "./IconBadge";
 
 const pin = (s: object) => ({ position: "absolute" as const, ...s });
 
@@ -24,9 +25,8 @@ export default function Benefits() {
                     <Reveal className="b-cell b-cell-blue">
                         <article className="b-card b-blue">
                             <div className="b-art" aria-hidden="true">
-                                <RpCoin className="float-slow" style={pin({ right: 150, top: 34 })} />
-                                <GiftCoin className="float" scale={0.62} style={pin({ right: 40, top: 22, animationDelay: "-2s" })} />
-                                <StarCoin className="float-slow" scale={0.55} style={pin({ right: -14, top: 176, animationDelay: "-3s" })} />
+                                <IconBadge icon={FaTag} bg="#ffffff" color="#2540ff" size={92} className="float-slow" style={pin({ right: 60, top: 24 })} />
+                                <IconBadge icon={FaReceipt} bg="#1a2cff" size={56} className="float" style={pin({ right: -6, top: 150, animationDelay: "-2s" })} />
                             </div>
                             <span className="chip chip-light">Harga terjangkau</span>
                             <div>
@@ -39,7 +39,7 @@ export default function Benefits() {
                     <Reveal delay={100} className="b-cell b-cell-yellow">
                         <article className="b-card b-yellow">
                             <div className="b-art" aria-hidden="true">
-                                <BoltCoin className="float" scale={0.85} style={pin({ right: -8, top: 14 })} />
+                                <IconBadge icon={FaBolt} bg="#0e0d3a" size={72} className="float" style={pin({ right: 6, top: 10 })} />
                             </div>
                             <div className="b-big">24/7</div>
                             <div>
@@ -74,6 +74,21 @@ export default function Benefits() {
                             <div>
                                 <h3 className="b-title b-title-sm">Banyak metode bayar</h3>
                                 <p className="b-text b-text-dark">Bayar lewat QRIS, e-wallet, atau transfer bank, sesukamu.</p>
+                            </div>
+                        </article>
+                    </Reveal>
+
+                    <Reveal delay={300} className="b-cell b-cell-full">
+                        <article className="b-card b-navy">
+                            <div className="b-art" aria-hidden="true">
+                                <IconBadge icon={FaTelegram} bg="#26A5E4" size={60} className="float-slow" style={pin({ right: 110, top: 20 })} />
+                                <IconBadge icon={FaHeart} bg="#E4405F" size={52} className="float" style={pin({ right: 20, top: 60, animationDelay: "-2s" })} />
+                            </div>
+                            <div>
+                                <h3 className="b-title b-title-sm">Satu akun, dua kebutuhan</h3>
+                                <p className="b-text">
+                                    Beli Telegram Stars/Premium atau pesan SMM Panel dari akun yang sama — nggak perlu daftar dua kali. Pesanan gagal? Saldo otomatis dikembalikan, nggak perlu diminta manual.
+                                </p>
                             </div>
                         </article>
                     </Reveal>

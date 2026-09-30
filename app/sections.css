@@ -28,6 +28,14 @@ html {
     transform: translateY(32px);
 }
 
+/* Badge ikon flat (IconBadge.tsx) -- display/place-items lewat class (bukan
+   inline style) supaya class lain yang nge-hide badge tertentu (mis.
+   .cta-top di mobile) tetap bisa menang lewat cascade CSS biasa. */
+.icon-badge {
+    display: grid;
+    place-items: center;
+}
+
 .rv-shown {
     opacity: 1;
     transform: none;
@@ -125,32 +133,8 @@ section[id] {
 
 .sec-dark {
     overflow: hidden;
-    background: #0e0d3a;
+    background: #2540ff;
     color: #ffffff;
-}
-
-.sec-dark::before {
-    content: "";
-    position: absolute;
-    right: -160px;
-    top: -220px;
-    width: 640px;
-    height: 640px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(74, 104, 255, 0.55), transparent 65%);
-    pointer-events: none;
-}
-
-.sec-dark::after {
-    content: "";
-    position: absolute;
-    left: -120px;
-    bottom: -260px;
-    width: 560px;
-    height: 560px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 210, 31, 0.16), transparent 65%);
-    pointer-events: none;
 }
 
 .sec-in {
@@ -311,15 +295,6 @@ section[id] {
     transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-.plate::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), transparent 46%);
-    pointer-events: none;
-}
-
 .tile:hover .plate {
     transform: rotate(-8deg) scale(1.08);
 }
@@ -440,7 +415,7 @@ section[id] {
 .bento {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
-    grid-template-rows: repeat(2, minmax(230px, auto));
+    grid-template-rows: repeat(2, minmax(230px, auto)) auto;
     gap: 14px;
 }
 
@@ -456,6 +431,10 @@ section[id] {
 .b-cell-yellow,
 .b-cell-gray {
     grid-column: span 5;
+}
+
+.b-cell-full {
+    grid-column: span 12;
 }
 
 .b-card {
@@ -492,9 +471,17 @@ section[id] {
     color: #0b0b0c;
 }
 
+/* Sama gradiennya dengan .b-blue tapi TANPA min-height:470px -- dipakai buat
+   kartu full-width satu baris (.b-cell-full), bukan kartu tinggi 2 baris. */
+.b-navy {
+    background: radial-gradient(90% 70% at 85% 10%, rgba(255, 255, 255, 0.22), transparent 60%), linear-gradient(165deg, #4a68ff 0%, #2540ff 55%, #1a2cff 100%);
+    color: #ffffff;
+}
+
 .b-blue>*:not(.b-art),
 .b-yellow>*:not(.b-art),
-.b-gray>*:not(.b-art) {
+.b-gray>*:not(.b-art),
+.b-navy>*:not(.b-art) {
     position: relative;
 }
 
@@ -553,6 +540,40 @@ section[id] {
     font-size: 13px;
     font-weight: 700;
     color: #2540ff;
+}
+
+/* ---------- metode pembayaran ---------- */
+.pay-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.pay-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 999px;
+    background: #f4f4f6;
+    box-shadow: inset 0 0 0 1px #eceef3;
+    font-size: 14px;
+    font-weight: 700;
+    color: #3d3d45;
+}
+
+.pay-chip-logo {
+    padding: 10px 22px;
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px #eceef3, 0 2px 6px rgba(11, 11, 12, 0.04);
+}
+
+.pay-chip-logo img {
+    height: 22px;
+    max-width: 90px;
+    width: auto;
+    object-fit: contain;
+    display: block;
 }
 
 /* ---------- faq ---------- */
@@ -897,7 +918,8 @@ section[id] {
 
     .b-cell-blue,
     .b-cell-yellow,
-    .b-cell-gray {
+    .b-cell-gray,
+    .b-cell-full {
         grid-column: auto;
         grid-row: auto;
     }
@@ -952,7 +974,7 @@ section[id] {
         opacity: 0.9;
     }
 
-    .cta-top {
+    .icon-badge.cta-top {
         display: none;
     }
 

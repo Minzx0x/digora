@@ -9,6 +9,9 @@ export type TicketRow = {
     id: string;
     subject: string;
     status: TicketStatus;
+    category: string | null;
+    subcategory: string | null;
+    orderId: string | null;
     lastMessage: string;
     lastMessageAt: string;
 };
@@ -68,7 +71,7 @@ export async function getMyTicketsAction(): Promise<TicketRow[]> {
 
     const { data: ticketsRaw } = await supabase
         .from("tickets")
-        .select("id, subject, status, created_at, updated_at")
+        .select("id, subject, status, category, subcategory, order_id, created_at, updated_at")
         .order("updated_at", { ascending: false });
 
     const ids = (ticketsRaw ?? []).map((t) => t.id as string);
@@ -94,6 +97,9 @@ export async function getMyTicketsAction(): Promise<TicketRow[]> {
             id: t.id as string,
             subject: t.subject as string,
             status: t.status as TicketStatus,
+            category: t.category as string | null,
+            subcategory: t.subcategory as string | null,
+            orderId: t.order_id as string | null,
             lastMessage: last?.message?.trim() ? last.message : last?.attachmentPath ? "📷 Foto" : "",
             lastMessageAt: last?.createdAt ?? (t.updated_at as string),
         };
@@ -121,15 +127,37 @@ export async function getTicketThreadAction(ticketId: string): Promise<TicketMes
     );
 }
 
-export async function createTicketAction(input: { subject: string; message: string }): Promise<{ error: string | null; ticketId?: string }> {
+export async function createTicketAction(input: {
+    subject: string;
+    message: string;
+    category?: string;
+    subcategory?: string;
+    orderId?: string;
+    file?: File | null;
+}): Promise<{ error: string | null; ticketId?: string }> {
     if (!input.subject.trim() || !input.message.trim()) return { error: "Isi subjek dan pesan dulu." };
     const supabase = await createClient();
     const { data, error } = await supabase.rpc("create_ticket", {
         p_subject: input.subject.trim(),
         p_message: input.message.trim(),
+        p_category: input.category?.trim() || null,
+        p_subcategory: input.subcategory?.trim() || null,
+        p_order_id: input.orderId?.trim() || null,
     });
     if (error) return { error: "Gagal membuat tiket. Coba lagi." };
     const ticket = data as { id?: string } | null;
+
+    // Lampiran (kalau ada) dikirim sebagai pesan susulan lewat reply_ticket --
+    // tiketnya sendiri harus sudah ada dulu (storage RLS ticket_attachments_*
+    // ngecek folder path = ticket_id yang beneran ada di tabel tickets),
+    // sama pola upload yang dipakai tk-reply.
+    if (input.file && ticket?.id) {
+        const uploaded = await uploadTicketAttachment(supabase, ticket.id, input.file);
+        if (!uploaded.error && uploaded.path) {
+            await supabase.rpc("reply_ticket", { p_ticket_id: ticket.id, p_message: "", p_attachment_path: uploaded.path });
+        }
+    }
+
     revalidatePath("/dashboard", "layout");
     return { error: null, ticketId: ticket?.id };
 }

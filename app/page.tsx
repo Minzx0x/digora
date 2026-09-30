@@ -3,6 +3,7 @@ import Products from "@/components/Products";
 import SmmProducts from "@/components/SmmProducts";
 import HowItWorks from "@/components/HowItWorks";
 import Benefits from "@/components/Benefits";
+import PaymentMethods from "@/components/PaymentMethods";
 import Faq from "@/components/Faq";
 import Cta from "@/components/Cta";
 import Footer from "@/components/Footer";
@@ -25,6 +26,7 @@ export default function Home() {
           <Products />
           <HowItWorks />
           <Benefits />
+          <PaymentMethods />
           <Faq />
           <Cta />
         </div>

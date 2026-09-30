@@ -2,22 +2,30 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
+// "Daftar" SENGAJA bukan bagian dari daftar ini lagi -- sekarang jadi tombol
+// CTA terpisah di sebelah nav ini (lihat Hero.tsx & FloatingNav.tsx), gaya
+// "nav link di tengah + tombol CTA sendiri" ala landing page agency, bukan
+// digabung satu pill kayak sebelumnya.
 const ITEMS = [
   { href: "#smm", label: "SMM Panel", id: "smm" },
   { href: "#produk", label: "Paket Stars", id: "produk" },
   { href: "#harga", label: "Harga", id: "harga" },
   { href: "#bantuan", label: "Bantuan", id: "bantuan" },
-  { href: "/daftar", label: "Daftar", id: "" },
 ];
-const HOME = ITEMS.length - 1; // "Daftar" aktif saat berada di paling atas
 
 export default function Nav() {
-  const [active, setActive] = useState(HOME);
+  // -1 = belum ada section yang aktif (posisi di paling atas halaman) --
+  // beda dari sebelumnya yang selalu ada 1 item "Daftar" nyala sebagai default.
+  const [active, setActive] = useState(-1);
   const [ind, setInd] = useState<{ x: number; w: number } | null>(null);
   const refs = useRef<(HTMLAnchorElement | null)[]>([]);
   const lockUntil = useRef(0);
 
   const measure = useCallback(() => {
+    if (active < 0) {
+      setInd(null);
+      return;
+    }
     const el = refs.current[active];
     if (el) setInd({ x: el.offsetLeft, w: el.offsetWidth });
   }, [active]);
@@ -36,10 +44,9 @@ export default function Nav() {
     const onScroll = () => {
       if (Date.now() < lockUntil.current) return;
       const vh = window.innerHeight;
-      if (window.scrollY < vh * 0.5) return setActive(HOME);
-      let cur = 0;
+      if (window.scrollY < vh * 0.5) return setActive(-1);
+      let cur = -1;
       ITEMS.forEach((it, i) => {
-        if (!it.id) return;
         const el = document.getElementById(it.id);
         if (el && el.getBoundingClientRect().top <= vh * 0.4) cur = i;
       });

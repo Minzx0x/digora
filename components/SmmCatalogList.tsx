@@ -48,9 +48,12 @@ const PAGE_SIZE = 50;
 // dipakai SAMA PERSIS dengan yang dipakai form pemesanan (getSmmCatalog()),
 // nggak ada fetch tambahan. Klik nama layanan langsung lompat ke form beli
 // dengan layanan itu ke-pilih otomatis (lihat ?service= di SmmView.tsx).
+type SortMode = "default" | "fastest";
+
 export default function SmmCatalogList({ services }: { services: SmmServiceRow[] }) {
     const [q, setQ] = useState("");
     const [platform, setPlatform] = useState("all");
+    const [sort, setSort] = useState<SortMode>("default");
     const [page, setPage] = useState(1);
 
     const withPlatform = useMemo(() => services.map((s) => ({ ...s, platform: detectPlatform(s) })), [services]);
@@ -64,25 +67,40 @@ export default function SmmCatalogList({ services }: { services: SmmServiceRow[]
         });
     }, [withPlatform, q, platform]);
 
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-    const clampedPage = Math.min(page, totalPages);
-    const pageRows = filtered.slice((clampedPage - 1) * PAGE_SIZE, clampedPage * PAGE_SIZE);
-
-    // Estimasi cuma diambil buat layanan yang lagi KELIHATAN di halaman ini
-    // (bukan seluruh katalog sekaligus) -- 1 RPC batched per pindah
-    // halaman/filter, bukan 1 RPC per baris. Rata-ratanya dihitung dari
-    // riwayat pesanan SEMUA pembeli buat layanan itu (lihat komentar RPC-nya),
-    // jadi makin banyak orang beli layanan yang sama, makin akurat angkanya.
+    // Estimasi normalnya cuma diambil buat layanan yang lagi KELIHATAN di
+    // halaman ini (bukan seluruh katalog sekaligus) -- 1 RPC batched per
+    // pindah halaman/filter, bukan 1 RPC per baris. Tapi sort "Tercepat"
+    // butuh tau estimasi SEMUA layanan yang lolos filter dulu sebelum bisa
+    // diurutin (nggak bisa cuma page yang kelihatan) -- itu aman, RPC-nya
+    // di-filter dari sisi tabel orders (yang kecil), bukan dari besar-kecilnya
+    // daftar ID yang dikirim, jadi ngirim ribuan ID sekaligus tetap murah.
     const [eta, setEta] = useState<Record<string, SmmServiceEta>>({});
     const [etaLoading, setEtaLoading] = useState(false);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const clampedPage = Math.min(page, totalPages);
+    const pageRows = useMemo(() => {
+        if (sort !== "fastest") return filtered.slice((clampedPage - 1) * PAGE_SIZE, clampedPage * PAGE_SIZE);
+        const withEta = [...filtered].sort((a, b) => {
+            const ea = eta[a.id];
+            const eb = eta[b.id];
+            const va = ea && ea.sampleSize > 0 && ea.avgMinutes !== null ? ea.avgMinutes : Infinity;
+            const vb = eb && eb.sampleSize > 0 && eb.avgMinutes !== null ? eb.avgMinutes : Infinity;
+            return va - vb;
+        });
+        return withEta.slice((clampedPage - 1) * PAGE_SIZE, clampedPage * PAGE_SIZE);
+    }, [filtered, sort, eta, clampedPage]);
+
     useEffect(() => {
         let cancelled = false;
-        const ids = pageRows.map((s) => s.id);
+        // Sort "Tercepat": butuh eta semua layanan yang lolos filter (biar
+        // urutannya bener), bukan cuma yang kelihatan di halaman ini.
+        const ids = sort === "fastest" ? filtered.map((s) => s.id) : pageRows.map((s) => s.id);
         if (ids.length === 0) return;
         setEtaLoading(true);
         getSmmServicesEtaAction(ids).then((res) => {
             if (!cancelled) {
-                setEta(res);
+                setEta((prev) => ({ ...prev, ...res }));
                 setEtaLoading(false);
             }
         });
@@ -90,7 +108,7 @@ export default function SmmCatalogList({ services }: { services: SmmServiceRow[]
             cancelled = true;
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [clampedPage, q, platform]);
+    }, [clampedPage, q, platform, sort]);
 
     return (
         <section className="d-card">
@@ -126,7 +144,20 @@ export default function SmmCatalogList({ services }: { services: SmmServiceRow[]
                         </option>
                     ))}
                 </select>
+                <select
+                    className="u-select u-list-platform"
+                    value={sort}
+                    onChange={(e) => {
+                        setSort(e.target.value as SortMode);
+                        setPage(1);
+                    }}
+                    aria-label="Urutkan"
+                >
+                    <option value="default">Urutan default</option>
+                    <option value="fastest">Tercepat dulu</option>
+                </select>
             </div>
+            {sort === "fastest" && etaLoading && <p className="d-note">Menghitung estimasi seluruh layanan…</p>}
 
             <div className="d-table-wrap">
                 <table className="d-table">

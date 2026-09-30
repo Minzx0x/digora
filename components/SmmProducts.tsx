@@ -54,7 +54,7 @@ export default function SmmProducts() {
                                 className="plate"
                                 style={{
                                     background: p.color,
-                                    boxShadow: `inset 0 2px 0 rgba(255,255,255,0.35), inset 0 -4px 0 rgba(0,0,0,0.16), 0 14px 22px ${p.color}55`,
+                                    boxShadow: `0 14px 22px ${p.color}40`,
                                 }}
                             >
                                 <p.icon size={30} color="#ffffff" />

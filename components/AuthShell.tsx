@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Brand from "./Brand";
 import AuthForm from "./AuthForm";
-import { StarCoin, Plane, BoltCoin, GiftCoin } from "./Coins";
+import { FaStar, FaPaperPlane, FaBolt, FaGift } from "react-icons/fa6";
+import IconBadge from "./IconBadge";
 import "./auth.css";
 
 type Mode = "login" | "register";
@@ -86,10 +87,10 @@ export default function AuthShell({ initial }: { initial: Mode }) {
                 <aside className="auth-art">
                     <Brand light />
                     <div className="auth-art-scene" aria-hidden="true">
-                        <StarCoin className="float" style={{ right: 60, top: 90 }} scale={0.95} />
-                        <Plane className="float-slow" style={{ left: 40, top: 250 }} scale={0.85} />
-                        <BoltCoin className="float-slow" style={{ right: 230, top: 330 }} scale={0.7} />
-                        <GiftCoin className="float" style={{ right: 20, top: 400 }} scale={0.6} />
+                        <IconBadge icon={FaStar} bg="#ffffff" color="#f5a623" size={88} className="float" style={{ right: 60, top: 90 }} />
+                        <IconBadge icon={FaPaperPlane} bg="#ffffff" color="#2540ff" size={64} className="float-slow" style={{ left: 40, top: 250 }} />
+                        <IconBadge icon={FaBolt} bg="#ffffff" color="#2540ff" size={56} className="float-slow" style={{ right: 230, top: 330 }} />
+                        <IconBadge icon={FaGift} bg="#ffffff" color="#e4483c" size={48} className="float" style={{ right: 20, top: 400 }} />
                     </div>
                     <div className="auth-art-copy">
                         {(["login", "register"] as Mode[]).map((m) => (

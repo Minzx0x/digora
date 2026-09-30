@@ -124,6 +124,12 @@ export default function AdminTiket({ tickets: initialTickets }: { tickets: Admin
                                         <p className="mute d-mute-sm">
                                             {t.userName} · {t.userEmail}
                                         </p>
+                                        {(t.category || t.orderId) && (
+                                            <p className="mute d-mute-xs">
+                                                {[t.category, t.subcategory].filter(Boolean).join(" · ")}
+                                                {t.orderId ? ` · Order ID: ${t.orderId}` : ""}
+                                            </p>
+                                        )}
                                         {t.lastMessage && <p className="mute d-mute-sm tk-list-preview">{t.lastMessage}</p>}
                                         <span className="mute d-mute-xs">{timeAgo(t.lastMessageAt)}</span>
                                     </button>
@@ -141,6 +147,7 @@ export default function AdminTiket({ tickets: initialTickets }: { tickets: Admin
                                     <span className="mute d-mute-xs">
                                         {selected?.userName} · {selected?.userEmail}
                                     </span>
+                                    {selected?.orderId && <span className="mute d-mute-xs">Order ID: {selected.orderId}</span>}
                                 </div>
                                 <button type="button" className="d-pill solid" onClick={toggleStatus} disabled={busyStatus}>
                                     {selected?.status === "open" ? "Tutup tiket" : "Buka lagi"}

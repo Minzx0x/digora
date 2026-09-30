@@ -1,5 +1,6 @@
 import Reveal from "./Reveal";
-import { BoltCoin } from "./Coins";
+import { FaHeadset } from "react-icons/fa6";
+import IconBadge from "./IconBadge";
 
 const FAQ = [
     {
@@ -34,6 +35,18 @@ const FAQ = [
         q: "Metode pembayaran apa saja yang tersedia?",
         a: "Kamu bisa membayar lewat QRIS, e-wallet, atau transfer bank.",
     },
+    {
+        q: "Apakah Digora aman dan terpercaya?",
+        a: "Pembayaran diproses lewat payment gateway resmi (bukan transfer manual ke rekening pribadi), saldo dan riwayat semua pesananmu tercatat otomatis di akun, dan ada Tiket Support kalau ada kendala.",
+    },
+    {
+        q: "Kalau pesanan gagal, uang saya hilang?",
+        a: "Tidak. Kalau pesanan ditandai gagal, saldo otomatis dikembalikan ke akunmu — nggak perlu diminta manual ke admin.",
+    },
+    {
+        q: "Kenapa harus isi saldo dulu, bukan bayar langsung per pesanan?",
+        a: "Biar belanja berikutnya lebih cepat — sekali isi saldo, tinggal pilih produk dan pesan tanpa harus bayar ulang tiap transaksi. Sisa saldo tetap tersimpan di akunmu, dipakai kapan saja.",
+    },
 ];
 
 export default function Faq() {
@@ -46,9 +59,11 @@ export default function Faq() {
                     <p className="lead">Jawaban singkat untuk hal yang paling sering ditanyakan.</p>
 
                     <div className="faq-card">
-                        <BoltCoin
+                        <IconBadge
+                            icon={FaHeadset}
+                            bg="#2540ff"
+                            size={56}
                             className="float"
-                            scale={0.62}
                             style={{ position: "absolute", right: 14, top: 14 }}
                         />
                         <h3>Butuh bantuan langsung?</h3>

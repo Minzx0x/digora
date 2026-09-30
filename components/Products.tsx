@@ -6,19 +6,18 @@ type Pack = {
     note: string;
     /** jumlah bintang kecil yang ditampilkan di ikon (1-3) */
     size: 1 | 2 | 3;
-    from: string;
-    to: string;
+    color: string;
     /** Isi harga kalau mau ditampilkan, contoh: "Rp 10.000". Kosong = tidak tampil. */
     price?: string;
 };
 
 const PACKS: Pack[] = [
-    { stars: "50", note: "Untuk mencoba", size: 1, from: "#ffd75e", to: "#f0a000" },
-    { stars: "100", note: "Paket dasar", size: 1, from: "#63d0ff", to: "#1c8ee6" },
-    { stars: "250", note: "Paket menengah", size: 2, from: "#ffd75e", to: "#f0a000" },
-    { stars: "500", note: "Paket besar", size: 2, from: "#63d0ff", to: "#1c8ee6" },
-    { stars: "1.000", note: "Paket besar+", size: 3, from: "#ffd75e", to: "#f0a000" },
-    { stars: "2.500", note: "Paket jumbo", size: 3, from: "#63d0ff", to: "#1c8ee6" },
+    { stars: "50", note: "Untuk mencoba", size: 1, color: "#f5a623" },
+    { stars: "100", note: "Paket dasar", size: 1, color: "#2540ff" },
+    { stars: "250", note: "Paket menengah", size: 2, color: "#f5a623" },
+    { stars: "500", note: "Paket besar", size: 2, color: "#2540ff" },
+    { stars: "1.000", note: "Paket besar+", size: 3, color: "#f5a623" },
+    { stars: "2.500", note: "Paket jumbo", size: 3, color: "#2540ff" },
 ];
 
 const STAR = "M16 3 L19.5 12 L29 12.5 L21.5 18.5 L24 28 L16 22.8 L8 28 L10.5 18.5 L3 12.5 L12.5 12 Z";
@@ -85,13 +84,13 @@ export default function Products() {
                             key={p.stars}
                             href="/daftar"
                             className="tile"
-                            style={{ "--tint": p.to, animationDelay: `${i * 40}ms` } as CSSProperties}
+                            style={{ "--tint": p.color, animationDelay: `${i * 40}ms` } as CSSProperties}
                         >
                             <span
                                 className="plate"
                                 style={{
-                                    background: `linear-gradient(150deg, ${p.from}, ${p.to})`,
-                                    boxShadow: `inset 0 2px 0 rgba(255,255,255,0.5), inset 0 -4px 0 rgba(0,0,0,0.12), 0 14px 22px ${p.to}55`,
+                                    background: p.color,
+                                    boxShadow: `0 14px 22px ${p.color}40`,
                                 }}
                             >
                                 <StarIcon size={p.size} />
