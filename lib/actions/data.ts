@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { buyTelegramStarsOnRsc, buyTelegramPremiumOnRsc, mapRscStatus } from "@/lib/rsc";
 import { createPaymenkuTransaction, PAYMENKU_CHANNEL_CODE, PaymenkuError } from "@/lib/paymenku";
+import { getTierInfo, type TierInfo } from "@/lib/tier";
 
 export type Status = "ok" | "proc" | "wait" | "fail";
 
@@ -29,16 +30,17 @@ export type PendingDepositRow = {
 };
 
 export type DashboardData = {
-    profile: { name: string; telegramUsername: string; email: string; saldo: number } | null;
+    profile: { name: string; telegramUsername: string; email: string; saldo: number; avatarUrl: string | null } | null;
     orders: OrderRow[];
     mutasi: MutasiRow[];
     // Tagihan Paymenku yang masih 'pending' terakhir (kalau ada) — dipakai buat
     // munculin lagi kartu QR/status "menunggu pembayaran" kalau user nge-refresh
     // halaman sebelum pembayarannya kelar, biar gak ilang gitu aja.
     pendingDeposit: PendingDepositRow | null;
+    tier: TierInfo;
 };
 
-const EMPTY: DashboardData = { profile: null, orders: [], mutasi: [], pendingDeposit: null };
+const EMPTY: DashboardData = { profile: null, orders: [], mutasi: [], pendingDeposit: null, tier: getTierInfo(0) };
 
 function friendlyDbError(message: string): string {
     const m = message.toLowerCase();
@@ -54,10 +56,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) return EMPTY;
 
-    const [{ data: profile }, { data: orders }, { data: mutasi }, { data: pending }] = await Promise.all([
+    const [{ data: profile }, { data: orders }, { data: mutasi }, { data: pending }, { data: spend }] = await Promise.all([
         supabase
             .from("profiles")
-            .select("name, telegram_username, email, saldo")
+            .select("name, telegram_username, email, saldo, avatar_url")
             .eq("id", auth.user.id)
             .maybeSingle(),
         supabase
@@ -80,6 +82,7 @@ export async function getDashboardData(): Promise<DashboardData> {
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle(),
+        supabase.rpc("my_completed_spend"),
     ]);
 
     return {
@@ -89,8 +92,9 @@ export async function getDashboardData(): Promise<DashboardData> {
                 telegramUsername: profile.telegram_username ?? "",
                 email: profile.email ?? auth.user.email ?? "",
                 saldo: Number(profile.saldo ?? 0),
+                avatarUrl: (profile.avatar_url as string | null) ?? null,
             }
-            : { name: "", telegramUsername: "", email: auth.user.email ?? "", saldo: 0 },
+            : { name: "", telegramUsername: "", email: auth.user.email ?? "", saldo: 0, avatarUrl: null },
         orders: (orders ?? []).map((o) => ({
             id: o.order_code as string,
             to: o.kind === "smm" ? ((o.target_link as string) ?? "") : "@" + o.target_username,
@@ -115,6 +119,7 @@ export async function getDashboardData(): Promise<DashboardData> {
                 time: pending.created_at as string,
             }
             : null,
+        tier: getTierInfo(Number(spend ?? 0)),
     };
 }
 
@@ -318,6 +323,39 @@ export async function updateProfileAction(input: {
     if (error) return { error: "Gagal menyimpan profil." };
     revalidatePath("/dashboard", "layout");
     return { error: null };
+}
+
+const AVATAR_BUCKET = "avatars";
+const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
+
+// Path selalu "{user_id}/avatar.{ext}" + upsert -- foto lama ketimpa langsung,
+// bukan numpuk file baru tiap ganti foto (lihat storage policy di
+// supabase/profile-avatar.sql: user cuma boleh nulis ke folder uid sendiri).
+export async function uploadAvatarAction(file: File): Promise<{ url: string | null; error: string | null }> {
+    const supabase = await createClient();
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth.user) return { url: null, error: "Sesi berakhir, silakan login lagi." };
+    if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+        return { url: null, error: "Format foto tidak didukung (cuma JPEG/PNG/WEBP)." };
+    }
+    if (file.size > MAX_AVATAR_BYTES) return { url: null, error: "Ukuran foto maksimal 3MB." };
+
+    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+    const path = `${auth.user.id}/avatar.${ext}`;
+    const { error: upErr } = await supabase.storage.from(AVATAR_BUCKET).upload(path, file, { upsert: true, contentType: file.type });
+    if (upErr) return { url: null, error: "Gagal upload foto." };
+
+    const { data: pub } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(path);
+    // Query param cache-bust -- path/nama file persis sama tiap ganti foto
+    // (upsert), tanpa ini browser/CDN bisa nampilin foto lama dari cache.
+    const url = `${pub.publicUrl}?v=${Date.now()}`;
+
+    const { error: dbErr } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", auth.user.id);
+    if (dbErr) return { url: null, error: "Foto ke-upload tapi gagal disimpan ke profil." };
+
+    revalidatePath("/dashboard", "layout");
+    return { url, error: null };
 }
 
 export async function changePasswordAction(input: {

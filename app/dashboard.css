@@ -2128,6 +2128,79 @@
     margin: -4px 0 4px;
 }
 
+/* Foto profil + badge tier di ProfilView */
+.u-avatar-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.u-avatar-wrap {
+    position: relative;
+    flex: none;
+}
+
+.u-avatar {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--d-badge-proc-bg);
+    color: #2540ff;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.u-avatar-fallback {
+    text-transform: uppercase;
+}
+
+.u-avatar-edit {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    padding: 4px 10px;
+    border: 2px solid var(--d-card-bg);
+    border-radius: 999px;
+    background: #2540ff;
+    color: #ffffff;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.u-avatar-edit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.u-avatar-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.u-avatar-info .d-note {
+    margin: 0;
+}
+
+.u-tier-badge {
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.u-tier-progress {
+    padding-top: 14px;
+    border-top: 1px solid var(--d-divider);
+}
+
 /* dropdown kategori/layanan di SmmView — lebih ringkas dari grid kartu buat
    katalog yang bisa banyak baris (beda dari paket Stars/Premium yang cuma
    segelintir tier) */

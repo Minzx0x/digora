@@ -4,12 +4,22 @@ import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
 import { adminAdjustSaldoAction, type CustomerRow } from "@/lib/actions/admin";
+import { getTierInfo, TIER_COLORS, type Tier } from "@/lib/tier";
 
 const rp = (n: number) => "Rp " + n.toLocaleString("id-ID");
+
+const TIER_FILTERS: readonly ["all" | Tier, string][] = [
+    ["all", "Semua"],
+    ["platinum", "Platinum"],
+    ["gold", "Gold"],
+    ["silver", "Silver"],
+    ["bronze", "Bronze"],
+];
 
 export default function AdminCustomers({ customers }: { customers: CustomerRow[] }) {
     const router = useRouter();
     const [q, setQ] = useState("");
+    const [tierFilter, setTierFilter] = useState<"all" | Tier>("all");
     const [openId, setOpenId] = useState<string | null>(null);
     const [amount, setAmount] = useState("");
     const [reason, setReason] = useState("");
@@ -44,10 +54,10 @@ export default function AdminCustomers({ customers }: { customers: CustomerRow[]
         () =>
             customers.filter(
                 (c) =>
-                    !q.trim() ||
-                    (c.name + c.email + c.telegramUsername).toLowerCase().includes(q.trim().toLowerCase()),
+                    (!q.trim() || (c.name + c.email + c.telegramUsername).toLowerCase().includes(q.trim().toLowerCase())) &&
+                    (tierFilter === "all" || getTierInfo(c.totalSpent).tier === tierFilter),
             ),
-        [customers, q],
+        [customers, q, tierFilter],
     );
 
     return (
@@ -75,6 +85,13 @@ export default function AdminCustomers({ customers }: { customers: CustomerRow[]
                 <section className="d-card">
                     <div className="d-card-head">
                         <h2>Semua pelanggan ({rows.length})</h2>
+                        <div className="d-range" role="tablist" aria-label="Filter tier">
+                            {TIER_FILTERS.map(([k, label]) => (
+                                <button key={k} className={tierFilter === k ? "on" : ""} onClick={() => setTierFilter(k)}>
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="d-table-wrap">
@@ -87,12 +104,15 @@ export default function AdminCustomers({ customers }: { customers: CustomerRow[]
                                     <th>Saldo</th>
                                     <th>Pesanan</th>
                                     <th>Total belanja</th>
+                                    <th>Tier</th>
                                     <th>Bergabung</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {rows.map((c) => (
+                                {rows.map((c) => {
+                                    const tier = getTierInfo(c.totalSpent);
+                                    return (
                                     <Fragment key={c.id}>
                                         <tr>
                                             <td>
@@ -108,6 +128,17 @@ export default function AdminCustomers({ customers }: { customers: CustomerRow[]
                                             <td>{rp(c.saldo)}</td>
                                             <td>{c.orderCount}</td>
                                             <td>{rp(c.totalSpent)}</td>
+                                            <td>
+                                                <span
+                                                    className="u-tier-badge"
+                                                    style={{
+                                                        background: TIER_COLORS[tier.tier].bg,
+                                                        color: TIER_COLORS[tier.tier].text,
+                                                    }}
+                                                >
+                                                    {tier.label}
+                                                </span>
+                                            </td>
                                             <td className="mute">
                                                 {new Date(c.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
                                             </td>
@@ -119,7 +150,7 @@ export default function AdminCustomers({ customers }: { customers: CustomerRow[]
                                         </tr>
                                         {openId === c.id && (
                                             <tr>
-                                                <td colSpan={8}>
+                                                <td colSpan={9}>
                                                     <div className="d-saldo-adjust">
                                                         <div className="u-input">
                                                             <input
@@ -149,7 +180,8 @@ export default function AdminCustomers({ customers }: { customers: CustomerRow[]
                                             </tr>
                                         )}
                                     </Fragment>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                         {rows.length === 0 && <div className="d-empty">Tidak ada pelanggan yang cocok.</div>}

@@ -27,8 +27,20 @@ function timeAgo(iso: string): string {
 
 const rp = (n: number) => "Rp " + n.toLocaleString("id-ID");
 
+// Unit adaptif (rb/jt) sesuai skala angkanya sendiri — sama pola dengan
+// rpShort() di AdminStatistik.tsx. WAJIB adaptif, bukan hardcode "jt": toko
+// kecil yang pendapatan hariannya cuma puluhan/ratusan ribu Rupiah bakal
+// kebulat jadi "0jt" kalau unitnya dipaksa jutaan, jadi kelihatan kosong
+// padahal transaksinya beneran ada.
+function rpShort(n: number): string {
+    if (n >= 1_000_000) return `${Math.round((n / 1_000_000) * 10) / 10}jt`;
+    if (n >= 1_000) return `${Math.round((n / 1_000) * 10) / 10}rb`;
+    return String(Math.round(n));
+}
+
 /* ───────── grafik ───────── */
 
+// data[].v = Rupiah mentah (lihat catatan di RevenuePoint, lib/actions/admin.ts).
 function Chart({ data }: { data: readonly { l: string; v: number }[] }) {
     // W dibikin lebar (bukan 640 lagi) biar rasio bawaan grafiknya sendiri udah
     // landscape — jadi pas di-lebarin penuh selebar kartu (lihat .d-chart di
@@ -41,7 +53,7 @@ function Chart({ data }: { data: readonly { l: string; v: number }[] }) {
     const padL = 34;
     const padB = 28;
     const padT = 14;
-    const max = Math.max(1, Math.ceil(Math.max(...data.map((d) => d.v))));
+    const max = Math.max(1, Math.max(...data.map((d) => d.v)));
     const ticks = [0, max / 2, max];
     const innerW = W - padL;
     const innerH = H - padB - padT;
@@ -50,14 +62,14 @@ function Chart({ data }: { data: readonly { l: string; v: number }[] }) {
     const top = data.reduce((a, b) => (b.v > a.v ? b : a), data[0]);
 
     return (
-        <svg className="d-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Pendapatan dalam jutaan rupiah">
+        <svg className="d-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Pendapatan dalam Rupiah">
             {ticks.map((t) => {
                 const y = padT + innerH - (t / max) * innerH;
                 return (
                     <g key={t}>
                         <line x1={padL} x2={W} y1={y} y2={y} stroke="var(--d-divider)" strokeWidth="1" />
                         <text x={padL - 8} y={y + 4} textAnchor="end">
-                            {t}jt
+                            {rpShort(t)}
                         </text>
                     </g>
                 );
@@ -70,11 +82,11 @@ function Chart({ data }: { data: readonly { l: string; v: number }[] }) {
                 return (
                     <g key={`${d.l}-${i}`}>
                         <rect x={x} y={y} width={bw} height={h} rx="10" fill={hot ? "#2540ff" : "#c9d1ff"}>
-                            <title>{`${d.l}: Rp ${d.v} jt`}</title>
+                            <title>{`${d.l}: ${rp(d.v)}`}</title>
                         </rect>
                         {hot && (
                             <text x={x + bw / 2} y={y - 6} textAnchor="middle" style={{ fill: "#2540ff", fontWeight: 700 }}>
-                                {d.v}jt
+                                {rpShort(d.v)}
                             </text>
                         )}
                         <text x={x + bw / 2} y={H - 8} textAnchor="middle">

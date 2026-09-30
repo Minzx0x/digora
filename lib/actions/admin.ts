@@ -84,6 +84,12 @@ function mapAdminOrderRow(o: Record<string, unknown>): AdminOrderRow {
     };
 }
 
+// v = Rupiah MENTAH (bukan pra-skala ke jutaan) -- Chart di AdminOverview.tsx
+// yang nentuin unit tampilan (rb/jt) secara adaptif sesuai skala datanya
+// sendiri. Sebelumnya di sini dibulatkan ke 0.1jt (~Rp100rb) duluan, jadi
+// pendapatan harian yang cuma puluhan ribu Rupiah (wajar buat toko SMM
+// kecil-kecilan) kebulat jadi 0 dan grafiknya keliatan kosong padahal
+// transaksinya beneran ada.
 export type RevenuePoint = { l: string; v: number };
 
 // Saldo supplier dipisah dari AdminData dan diambil lewat getRscBalance()
@@ -128,8 +134,16 @@ function dayKey(d: Date): string {
     return d.toISOString().slice(0, 10);
 }
 
+// timeZone: "UTC" WAJIB -- d di sini selalu dibikin dari komponen UTC (lihat
+// startOfToday/series di bawah), disamain sama dayKey yang juga baca
+// toISOString (UTC). Tanpa ini, di server yang jalan di timezone selain UTC
+// (mis. WIB) hasilnya BISA beda: date-nya sudah bener tapi weekday-nya salah
+// atau (kalau dayKey dibikin pakai getDate()/setDate() versi lokal, seperti
+// sebelumnya) key-nya sama sekali gak pernah match sama revenueByDay yang
+// dikunci dari created_at (UTC) -- itu penyebab grafik Pendapatan kelihatan
+// kosong padahal transaksinya ada.
 function dayLabel(d: Date): string {
-    return d.toLocaleDateString("id-ID", { weekday: "short" });
+    return d.toLocaleDateString("id-ID", { weekday: "short", timeZone: "UTC" });
 }
 
 // Dipakai app/admin/page.tsx untuk mengisi seluruh halaman Ringkasan admin
@@ -145,9 +159,11 @@ export async function getAdminData(): Promise<AdminData> {
     if (me?.role !== "admin") return EMPTY;
 
     const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Komponen UTC (bukan getFullYear/getMonth/getDate lokal) -- lihat catatan
+    // di dayLabel() soal kenapa seluruh pipeline tanggal di sini harus UTC.
+    const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     const start30 = new Date(startOfToday);
-    start30.setDate(start30.getDate() - 29);
+    start30.setUTCDate(start30.getUTCDate() - 29);
 
     const [{ data: settings }, { count: customerCount }, { data: ordersRaw }, { data: last30 }] = await Promise.all([
         supabase.from("app_settings").select("usd_idr_rate").eq("id", true).maybeSingle(),
@@ -180,16 +196,16 @@ export async function getAdminData(): Promise<AdminData> {
         const out: RevenuePoint[] = [];
         for (let i = days - 1; i >= 0; i--) {
             const d = new Date(startOfToday);
-            d.setDate(d.getDate() - i);
+            d.setUTCDate(d.getUTCDate() - i);
             const key = dayKey(d);
-            out.push({ l: dayLabel(d), v: Math.round(((revenueByDay.get(key) ?? 0) / 1_000_000) * 10) / 10 });
+            out.push({ l: dayLabel(d), v: revenueByDay.get(key) ?? 0 });
         }
         return out;
     }
 
     const todayKey = dayKey(startOfToday);
     const yesterday = new Date(startOfToday);
-    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
     const yestKey = dayKey(yesterday);
 
     const todayOrders = ordersByDay.get(todayKey) ?? 0;

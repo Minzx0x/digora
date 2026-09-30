@@ -72,23 +72,35 @@ async function fetchAllRows(
     return out;
 }
 
+// Semua fungsi tanggal di file ini WAJIB konsisten pakai komponen UTC (bukan
+// getFullYear/getMonth/getDate/setDate lokal) -- dayKey/monthKey (dipakai buat
+// nge-cocokin bucket vs created_at asli) baca lewat toISOString() yang UTC.
+// Kalau salah satu pihak (bucket vs data) kepeleset ke komponen lokal di
+// server yang jalan di timezone selain UTC (mis. WIB), keynya bisa gak pernah
+// nyambung sama sekali -- byBucket.get(key) balikin undefined terus, ke-skip
+// diam-diam tanpa error, jadi kelihatannya grafik/tren "kosong" padahal
+// datanya ada. Bug ini beneran kejadian di grafik Pendapatan halaman Ringkasan
+// admin (lib/actions/admin.ts) sebelum diperbaiki.
 function getRangeBounds(range: StatsRange, now: Date): { start: Date | null; end: Date } {
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     if (range === "7d") {
         const d = new Date(startOfToday);
-        d.setDate(d.getDate() - 6);
+        d.setUTCDate(d.getUTCDate() - 6);
         return { start: d, end: now };
     }
     if (range === "30d") {
         const d = new Date(startOfToday);
-        d.setDate(d.getDate() - 29);
+        d.setUTCDate(d.getUTCDate() - 29);
         return { start: d, end: now };
     }
     if (range === "month") {
-        return { start: new Date(now.getFullYear(), now.getMonth(), 1), end: now };
+        return { start: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)), end: now };
     }
     if (range === "lastMonth") {
-        return { start: new Date(now.getFullYear(), now.getMonth() - 1, 1), end: new Date(now.getFullYear(), now.getMonth(), 1) };
+        return {
+            start: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)),
+            end: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)),
+        };
     }
     return { start: null, end: now };
 }
@@ -98,40 +110,59 @@ function dayKey(d: Date): string {
 }
 
 function dayLabel(d: Date): string {
-    return d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+    return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "UTC" });
 }
 
 function monthKey(d: Date): string {
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 function monthLabel(d: Date): string {
-    return d.toLocaleDateString("id-ID", { month: "short", year: "2-digit" });
+    return d.toLocaleDateString("id-ID", { month: "short", year: "2-digit", timeZone: "UTC" });
+}
+
+function buildDailyBuckets(from: Date, end: Date): { key: string; label: string }[] {
+    const out: { key: string; label: string }[] = [];
+    const cursor = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()));
+    const last = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+    while (cursor <= last) {
+        out.push({ key: dayKey(cursor), label: dayLabel(cursor) });
+        cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+    return out;
 }
 
 // Bucket harian buat 7 Hari/30 Hari/Bulan Ini/Bulan Lalu, bucket BULANAN buat
 // Sepanjang Waktu — kalau toko udah jalan berbulan-bulan, grafik per-hari bakal
-// jadi ratusan titik yang nggak kebaca lagi.
-function buildBuckets(range: StatsRange, start: Date | null, end: Date, earliestData: Date | null): { key: string; label: string }[] {
-    const out: { key: string; label: string }[] = [];
+// jadi ratusan titik yang nggak kebaca lagi. TAPI kalau histori tokonya belum
+// lintas bulan (semua data masih di bulan yang sama), bucket bulanan cuma
+// ngasilin SATU titik — Recharts butuh minimal 2 titik buat narik garis/area,
+// jadi grafiknya keliatan kosong/cuma satu titik doang padahal datanya ada.
+// Turun ke bucket harian di kasus itu biar tetap ada garis tren yang kebaca.
+// Mengembalikan flag `monthly` juga, biar keyOf() di getAdminStatsData ikut
+// nyocok cara nge-bucket-nya (harian vs bulanan).
+function buildBuckets(
+    range: StatsRange,
+    start: Date | null,
+    end: Date,
+    earliestData: Date | null,
+): { buckets: { key: string; label: string }[]; monthly: boolean } {
     if (range === "all") {
         const from = earliestData ?? end;
-        const cursor = new Date(from.getFullYear(), from.getMonth(), 1);
-        const last = new Date(end.getFullYear(), end.getMonth(), 1);
-        while (cursor <= last) {
-            out.push({ key: monthKey(cursor), label: monthLabel(cursor) });
-            cursor.setMonth(cursor.getMonth() + 1);
+        const firstMonth = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1));
+        const lastMonth = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), 1));
+        if (firstMonth.getTime() < lastMonth.getTime()) {
+            const out: { key: string; label: string }[] = [];
+            const cursor = new Date(firstMonth);
+            while (cursor <= lastMonth) {
+                out.push({ key: monthKey(cursor), label: monthLabel(cursor) });
+                cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+            }
+            return { buckets: out, monthly: true };
         }
-        return out.length > 0 ? out : [{ key: monthKey(end), label: monthLabel(end) }];
+        return { buckets: buildDailyBuckets(from, end), monthly: false };
     }
-    const from = start ?? end;
-    const cursor = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-    const last = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-    while (cursor <= last) {
-        out.push({ key: dayKey(cursor), label: dayLabel(cursor) });
-        cursor.setDate(cursor.getDate() + 1);
-    }
-    return out;
+    return { buckets: buildDailyBuckets(start ?? end, end), monthly: false };
 }
 
 // Halaman /admin/statistik: tren Deposit/Revenue/Order + breakdown status &
@@ -165,8 +196,8 @@ export async function getAdminStatsData(range: StatsRange): Promise<AdminStatsDa
         if (!earliest || d < earliest) earliest = d;
     }
 
-    const buckets = buildBuckets(range, start, end, earliest);
-    const keyOf = range === "all" ? monthKey : dayKey;
+    const { buckets, monthly } = buildBuckets(range, start, end, earliest);
+    const keyOf = monthly ? monthKey : dayKey;
 
     const byBucket = new Map<string, { deposit: number; revenue: number; orders: number }>();
     for (const b of buckets) byBucket.set(b.key, { deposit: 0, revenue: 0, orders: 0 });

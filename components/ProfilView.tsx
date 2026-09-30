@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateProfileAction, changePasswordAction } from "@/lib/actions/data";
+import { updateProfileAction, changePasswordAction, uploadAvatarAction } from "@/lib/actions/data";
+import { TIER_COLORS, type TierInfo } from "@/lib/tier";
 
 function pwStrength(pw: string) {
     let s = 0;
@@ -12,15 +13,57 @@ function pwStrength(pw: string) {
     return pw ? Math.max(1, s) : 0;
 }
 
+function initials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "?";
+    return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
+}
+
+const rp = (n: number) => "Rp " + n.toLocaleString("id-ID");
+
+const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_AVATAR_BYTES = 3 * 1024 * 1024;
+
 export default function ProfilView({
     initial,
+    tier,
 }: {
-    initial: { name: string; telegramUsername: string; email: string };
+    initial: { name: string; telegramUsername: string; email: string; avatarUrl: string | null };
+    tier: TierInfo;
 }) {
     const router = useRouter();
     const [profile, setProfile] = useState({ name: initial.name, tg: initial.telegramUsername, email: initial.email });
     const [profMsg, setProfMsg] = useState("");
     const [savingProfile, setSavingProfile] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState(initial.avatarUrl);
+    const [avatarMsg, setAvatarMsg] = useState<{ ok: boolean; t: string } | null>(null);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
+
+    async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!ALLOWED_AVATAR_TYPES.includes(file.type)) {
+            setAvatarMsg({ ok: false, t: "Format foto tidak didukung (cuma JPEG/PNG/WEBP)." });
+            return;
+        }
+        if (file.size > MAX_AVATAR_BYTES) {
+            setAvatarMsg({ ok: false, t: "Ukuran foto maksimal 3MB." });
+            return;
+        }
+        setUploadingAvatar(true);
+        setAvatarMsg(null);
+        const res = await uploadAvatarAction(file);
+        setUploadingAvatar(false);
+        if (res.error) {
+            setAvatarMsg({ ok: false, t: res.error });
+            return;
+        }
+        setAvatarUrl(res.url);
+        setAvatarMsg({ ok: true, t: "Foto profil diperbarui." });
+        router.refresh();
+        if (avatarInputRef.current) avatarInputRef.current.value = "";
+    }
     const [pwMsg, setPwMsg] = useState<{ ok: boolean; t: string } | null>(null);
     const [changingPw, setChangingPw] = useState(false);
     const [showOldPw, setShowOldPw] = useState(false);
@@ -60,6 +103,70 @@ export default function ProfilView({
 
     return (
         <div className="u-narrow u-profil-stack">
+            <div className="d-card">
+                <div className="u-avatar-row">
+                    <div className="u-avatar-wrap">
+                        {avatarUrl ? (
+                            <img src={avatarUrl} alt="Foto profil" className="u-avatar" />
+                        ) : (
+                            <span className="u-avatar u-avatar-fallback" aria-hidden="true">
+                                {initials(profile.name)}
+                            </span>
+                        )}
+                        <button
+                            type="button"
+                            className="u-avatar-edit"
+                            onClick={() => avatarInputRef.current?.click()}
+                            disabled={uploadingAvatar}
+                        >
+                            {uploadingAvatar ? "…" : "Ganti"}
+                        </button>
+                        <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            hidden
+                            onChange={handleAvatarChange}
+                        />
+                    </div>
+                    <div className="u-avatar-info">
+                        <b>{profile.name || "Pengguna Digora"}</b>
+                        <span
+                            className="u-tier-badge"
+                            style={{ background: TIER_COLORS[tier.tier].bg, color: TIER_COLORS[tier.tier].text }}
+                        >
+                            {tier.label}
+                        </span>
+                        <p className="d-note">JPEG/PNG/WEBP, maks 3MB.</p>
+                        {avatarMsg && <div className={avatarMsg.ok ? "u-ok" : "u-bad"}>{avatarMsg.t}</div>}
+                    </div>
+                </div>
+
+                <div className="u-tier-progress">
+                    {tier.nextLabel ? (
+                        <>
+                            <div className="stat-bar-top">
+                                <span>Total belanja sukses: {rp(tier.totalSpend)}</span>
+                                <span>
+                                    Menuju {tier.nextLabel}: {rp(Math.max(0, (tier.nextThreshold ?? 0) - tier.totalSpend))} lagi
+                                </span>
+                            </div>
+                            <div className="stat-bar-track">
+                                <div
+                                    className="stat-bar-fill"
+                                    style={{ width: `${tier.progressPct}%`, background: TIER_COLORS[tier.tier].text }}
+                                />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="stat-bar-top">
+                            <span>Total belanja sukses: {rp(tier.totalSpend)}</span>
+                            <span>Tier tertinggi 🎉</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             <div className="d-card">
                 <div className="d-card-head">
                     <h2>Profil</h2>

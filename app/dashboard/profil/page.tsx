@@ -19,7 +19,9 @@ export default async function ProfilPage() {
                         name: data.profile?.name ?? "",
                         telegramUsername: data.profile?.telegramUsername ?? "",
                         email: data.profile?.email ?? "",
+                        avatarUrl: data.profile?.avatarUrl ?? null,
                     }}
+                    tier={data.tier}
                 />
             </main>
         </div>
