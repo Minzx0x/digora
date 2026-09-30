@@ -41,6 +41,13 @@ a {
 
 .page {
   min-height: 100vh;
+  /* Sama pola dengan .m-card -- tanpa dvh, .page (100vh, ukuran viewport
+     "penuh" saat address bar browser collapse) jadi lebih tinggi dari
+     .m-card di dalamnya (100dvh, ukuran viewport SAAT INI, dengan address
+     bar masih kelihatan). Selisihnya nge-push card ke tengah lewat
+     align-items:center, muncul sebagai gap hitam di bawah card sebelum
+     section berikutnya. */
+  min-height: 100dvh;
   padding: 12px;
   display: flex;
   align-items: center;
