@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
+import Toast from "./Toast";
 import {
     adminUpdateOrderStatusAction,
     adminCheckRscOrderAction,
@@ -45,6 +46,7 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
     // ID refill terakhir per order — cuma disimpan di tab ini (tidak ada kolom DB
     // buat ini), dipakai buat aktifin tombol "Cek refill" setelah refill diminta.
     const [refillIds, setRefillIds] = useState<Record<string, number>>({});
+    const [toast, setToast] = useState<{ text: string; kind: "success" | "error" } | null>(null);
 
     const rows = useMemo(
         () =>
@@ -78,7 +80,7 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
         setBusyId(orderId);
         const res = await adminCheckRscOrderAction(orderId, rscOrderNumber);
         setBusyId(null);
-        if (res.error) window.alert(res.error);
+        if (res.error) setToast({ text: res.error, kind: "error" });
         router.refresh();
     }
 
@@ -86,7 +88,7 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
         setBusyId(orderId);
         const res = await adminCheckSmmOrderAction(orderId, providerOrderId);
         setBusyId(null);
-        if (res.error) window.alert(res.error);
+        if (res.error) setToast({ text: res.error, kind: "error" });
         router.refresh();
     }
 
@@ -95,12 +97,12 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
         const res = await adminRefillSmmOrderAction(providerOrderId);
         setBusyId(null);
         if (res.error) {
-            window.alert(res.error);
+            setToast({ text: res.error, kind: "error" });
             return;
         }
         if (res.refillId !== undefined) {
             setRefillIds((prev) => ({ ...prev, [orderId]: res.refillId! }));
-            window.alert(`Refill diminta ke supplier (ID refill #${res.refillId}).`);
+            setToast({ text: `Refill diminta ke supplier (ID refill #${res.refillId}).`, kind: "success" });
         }
     }
 
@@ -110,7 +112,11 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
         setBusyId(orderId);
         const res = await adminCheckRefillStatusAction(refillId);
         setBusyId(null);
-        window.alert(res.error ?? `Status refill #${refillId}: ${res.status}`);
+        setToast(
+            res.error
+                ? { text: res.error, kind: "error" }
+                : { text: `Status refill #${refillId}: ${res.status}`, kind: "success" },
+        );
     }
 
     async function cancelSmm(orderId: string, providerOrderId: number) {
@@ -118,12 +124,13 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
         setBusyId(orderId);
         const res = await adminCancelSmmOrderAction(orderId, providerOrderId);
         setBusyId(null);
-        if (res.error) window.alert(res.error);
+        if (res.error) setToast({ text: res.error, kind: "error" });
         router.refresh();
     }
 
     return (
         <div className="dash">
+            {toast && <Toast message={toast.text} kind={toast.kind} onDone={() => setToast(null)} />}
             <AdminSidebar active="pesanan" />
 
             <main className="d-main">

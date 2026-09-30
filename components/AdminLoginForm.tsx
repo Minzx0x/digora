@@ -23,8 +23,13 @@ export default function AdminLoginForm() {
             setAlert(res.error);
             return;
         }
+        // Cuma terima path internal ("/xxx"), bukan URL penuh -- tanpa ini
+        // "next" dari query string bisa dipakai buat open redirect (mis. link
+        // phishing "/admin/login?next=https://situs-jahat.com" yang nge-
+        // redirect admin ke luar SETELAH dia login pakai kredensial asli).
         const next = new URLSearchParams(window.location.search).get("next");
-        router.push(next || "/admin");
+        const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/admin";
+        router.push(safeNext);
         router.refresh();
     }
 

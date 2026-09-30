@@ -2859,6 +2859,10 @@
     animation: u-toast-in 0.25s ease;
 }
 
+.u-toast-error {
+    background: #c0342b;
+}
+
 .u-toast svg {
     flex: none;
 }

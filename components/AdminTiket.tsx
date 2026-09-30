@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
+import Toast from "./Toast";
 import {
     getAdminTicketsData,
     getAdminTicketThreadAction,
@@ -39,6 +40,7 @@ export default function AdminTiket({ tickets: initialTickets }: { tickets: Admin
     const [file, setFile] = useState<File | null>(null);
     const [sending, setSending] = useState(false);
     const [busyStatus, setBusyStatus] = useState(false);
+    const [err, setErr] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     async function refreshTickets() {
@@ -69,7 +71,7 @@ export default function AdminTiket({ tickets: initialTickets }: { tickets: Admin
         const res = await adminReplyTicketAction({ ticketId: selectedId, message: reply.trim(), file });
         setSending(false);
         if (res.error) {
-            window.alert(res.error);
+            setErr(res.error);
             return;
         }
         setReply("");
@@ -96,6 +98,7 @@ export default function AdminTiket({ tickets: initialTickets }: { tickets: Admin
 
     return (
         <div className="dash">
+            {err && <Toast message={err} kind="error" onDone={() => setErr(null)} />}
             <AdminSidebar active="tiket" />
 
             <main className="d-main">

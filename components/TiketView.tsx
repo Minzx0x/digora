@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Toast from "./Toast";
 import {
     getMyTicketsAction,
     getTicketThreadAction,
@@ -53,6 +54,7 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
     const [reply, setReply] = useState("");
     const [file, setFile] = useState<File | null>(null);
     const [sending, setSending] = useState(false);
+    const [replyErr, setReplyErr] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [showNewForm, setShowNewForm] = useState(false);
@@ -101,7 +103,7 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
         const res = await replyTicketAction({ ticketId: selectedId, message: reply.trim(), file });
         setSending(false);
         if (res.error) {
-            window.alert(res.error);
+            setReplyErr(res.error);
             return;
         }
         setReply("");
@@ -156,6 +158,7 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
 
     return (
         <section className="d-card">
+            {replyErr && <Toast message={replyErr} kind="error" onDone={() => setReplyErr(null)} />}
             <div className="d-card-head">
                 <h2>Tiket saya</h2>
                 {!selectedId && (

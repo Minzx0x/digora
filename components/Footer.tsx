@@ -8,9 +8,15 @@ export default function Footer() {
                     <Brand light />
                     <p>Telegram Stars, Premium, dan SMM Panel — cepat dan terjangkau.</p>
                     <div className="foot-social">
-                        <a href="#">Instagram</a>
-                        <a href="#">TikTok</a>
-                        <a href="#">Telegram</a>
+                        <a href="https://facebook.com/digora.codes" target="_blank" rel="noopener noreferrer">
+                            Facebook
+                        </a>
+                        <a href="https://tiktok.com/@digora.codes" target="_blank" rel="noopener noreferrer">
+                            TikTok
+                        </a>
+                        <a href="https://t.me/Digoracsv" target="_blank" rel="noopener noreferrer">
+                            Telegram
+                        </a>
                     </div>
                 </div>
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
+import Toast from "./Toast";
 import {
     searchSmmflareServicesAction,
     addSmmServiceAction,
@@ -36,6 +37,7 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
     const [savedAll, setSavedAll] = useState(false);
     const [bulkMargin, setBulkMargin] = useState("");
     const [activatingAll, setActivatingAll] = useState(false);
+    const [toast, setToast] = useState<{ text: string; kind: "success" | "error" } | null>(null);
 
     const [cost, setCost] = useState<Record<string, string>>(
         Object.fromEntries(services.map((s) => [s.id, String(s.costPricePer1000)])),
@@ -82,7 +84,7 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
         });
         setAddingId(null);
         if (res.error) {
-            window.alert(res.error);
+            setToast({ text: res.error, kind: "error" });
             return;
         }
         router.refresh();
@@ -127,10 +129,13 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
         const res = await importAllSmmflareServicesAction();
         setImportingAll(false);
         if (res.error) {
-            window.alert(res.error);
+            setToast({ text: res.error, kind: "error" });
             return;
         }
-        window.alert(res.imported > 0 ? `${res.imported} layanan baru ditambah & diaktifkan.` : "Semua layanan sudah ada di katalog.");
+        setToast({
+            text: res.imported > 0 ? `${res.imported} layanan baru ditambah & diaktifkan.` : "Semua layanan sudah ada di katalog.",
+            kind: "success",
+        });
         router.refresh();
     }
 
@@ -163,7 +168,7 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
         setBusyId(id);
         const res = await refreshSmmServiceRateAction(id);
         setBusyId(null);
-        if (res.error) window.alert(res.error);
+        if (res.error) setToast({ text: res.error, kind: "error" });
         router.refresh();
     }
 
@@ -194,6 +199,7 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
 
     return (
         <div className="dash">
+            {toast && <Toast message={toast.text} kind={toast.kind} onDone={() => setToast(null)} />}
             <AdminSidebar active="smm" />
 
             <main className="d-main">

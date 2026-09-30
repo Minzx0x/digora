@@ -9,7 +9,12 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url);
     const code = searchParams.get("code");
-    const next = searchParams.get("next") ?? "/dashboard";
+    const rawNext = searchParams.get("next");
+    // Cuma terima path internal ("/xxx") -- endpoint ini publik (siapa pun
+    // bisa buka "/auth?code=...&next=...") jadi "next" bisa dipakai buat
+    // open redirect kalau nggak divalidasi, sama kelasnya dengan yang di
+    // AdminLoginForm.tsx.
+    const next = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/dashboard";
 
     if (code) {
         const supabase = await createClient();

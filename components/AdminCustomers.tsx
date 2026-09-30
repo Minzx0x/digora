@@ -3,6 +3,7 @@
 import { Fragment, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
+import Toast from "./Toast";
 import { adminAdjustSaldoAction, type CustomerRow } from "@/lib/actions/admin";
 import { getTierInfo, TIER_COLORS, type Tier } from "@/lib/tier";
 
@@ -24,6 +25,7 @@ export default function AdminCustomers({ customers }: { customers: CustomerRow[]
     const [amount, setAmount] = useState("");
     const [reason, setReason] = useState("");
     const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState<string | null>(null);
 
     function toggleAdjust(id: string) {
         setOpenId((prev) => (prev === id ? null : id));
@@ -34,14 +36,14 @@ export default function AdminCustomers({ customers }: { customers: CustomerRow[]
     async function applyAdjust(userId: string, sign: 1 | -1) {
         const n = Number(amount.replace(/\D/g, ""));
         if (!n) {
-            window.alert("Isi jumlah saldo dulu.");
+            setErr("Isi jumlah saldo dulu.");
             return;
         }
         setBusy(true);
         const res = await adminAdjustSaldoAction(userId, n * sign, reason.trim());
         setBusy(false);
         if (res.error) {
-            window.alert(res.error);
+            setErr(res.error);
             return;
         }
         setOpenId(null);
@@ -62,6 +64,7 @@ export default function AdminCustomers({ customers }: { customers: CustomerRow[]
 
     return (
         <div className="dash">
+            {err && <Toast message={err} kind="error" onDone={() => setErr(null)} />}
             <AdminSidebar active="pelanggan" />
 
             <main className="d-main">
