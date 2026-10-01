@@ -57,6 +57,10 @@ export type AdminOrderRow = {
     // di masa depan tanpa nambah kolom rsc_* lagi tiap ada supplier baru.
     provider: string; // "rsc" (default, order Telegram lama) | "smmflare"
     providerOrderId: number | null;
+    // Cuma keisi buat order SMM tipe "Custom Comments" (lihat
+    // supabase/smm-custom-comments.sql) — teks komentar mentah yang disubmit
+    // customer, 1 per baris. Order lain (Default/Telegram) selalu null.
+    comments: string | null;
 };
 
 // Baris mentah dari select orders dipakai di dua tempat (Ringkasan & halaman
@@ -81,6 +85,7 @@ function mapAdminOrderRow(o: Record<string, unknown>): AdminOrderRow {
         provider: (o.provider as string) ?? "rsc",
         providerOrderId:
             o.provider_order_id === null || o.provider_order_id === undefined ? null : Number(o.provider_order_id),
+        comments: (o.comments as string | null) ?? null,
     };
 }
 
@@ -171,7 +176,7 @@ export async function getAdminData(): Promise<AdminData> {
         supabase
             .from("orders")
             .select(
-                "id, order_code, target_username, target_link, kind, package_label, units, total, status, created_at, rsc_order_number, provider, provider_order_id, fail_reason",
+                "id, order_code, target_username, target_link, kind, package_label, units, total, status, created_at, rsc_order_number, provider, provider_order_id, fail_reason, comments",
             )
             .order("created_at", { ascending: false })
             .limit(200),
@@ -306,7 +311,7 @@ export async function getAllOrdersData(): Promise<{ isAdmin: boolean; orders: Ad
     const { data: ordersRaw } = await supabase
         .from("orders")
         .select(
-            "id, order_code, target_username, target_link, kind, package_label, units, total, status, created_at, rsc_order_number, provider, provider_order_id, fail_reason",
+            "id, order_code, target_username, target_link, kind, package_label, units, total, status, created_at, rsc_order_number, provider, provider_order_id, fail_reason, comments",
         )
         .order("created_at", { ascending: false })
         .limit(1000);

@@ -17,6 +17,9 @@ export type OrderRow = {
     status: Status;
     time: string; // ISO, diterjemahkan ke label relatif di komponen
     failReason: string;
+    // Cuma keisi buat order SMM tipe "Custom Comments" (lihat
+    // supabase/smm-custom-comments.sql) — teks komentar yang disubmit sendiri.
+    comments: string | null;
 };
 
 export type MutasiRow = { id: string; desc: string; amount: number; time: string };
@@ -64,7 +67,7 @@ export async function getDashboardData(): Promise<DashboardData> {
             .maybeSingle(),
         supabase
             .from("orders")
-            .select("order_code, target_username, target_link, kind, package_label, total, status, created_at, fail_reason")
+            .select("order_code, target_username, target_link, kind, package_label, total, status, created_at, fail_reason, comments")
             .eq("user_id", auth.user.id)
             .order("created_at", { ascending: false })
             .limit(50),
@@ -103,6 +106,7 @@ export async function getDashboardData(): Promise<DashboardData> {
             status: o.status as Status,
             time: o.created_at as string,
             failReason: (o.fail_reason as string) ?? "",
+            comments: (o.comments as string | null) ?? null,
         })),
         mutasi: (mutasi ?? []).map((m) => ({
             id: m.id as string,

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/actions/admin";
-import { getSmmflareServices, getSmmflareBalanceUsd, SmmflareError, type SmmflareService } from "@/lib/smmflare";
+import { getSmmflareServices, getSmmflareBalanceUsd, SmmflareError, type SmmflareService, type SmmServiceType } from "@/lib/smmflare";
 
 export type SmmAdminServiceRow = {
     id: string;
@@ -15,6 +15,7 @@ export type SmmAdminServiceRow = {
     minQuantity: number;
     maxQuantity: number;
     active: boolean;
+    serviceType: SmmServiceType;
 };
 
 export type SmmAdminData = {
@@ -70,7 +71,7 @@ export async function getSmmAdminData(): Promise<SmmAdminData> {
         fetchAllRows(
             supabase,
             "smm_services",
-            "id, provider_service_id, category, name, cost_price_per_1000, margin_percent, price_per_1000, min_quantity, max_quantity, active, sort_order",
+            "id, provider_service_id, category, name, cost_price_per_1000, margin_percent, price_per_1000, min_quantity, max_quantity, active, sort_order, service_type",
         ),
     ]);
     servicesRaw.sort((a, b) => {
@@ -90,6 +91,7 @@ export async function getSmmAdminData(): Promise<SmmAdminData> {
         minQuantity: Number(s.min_quantity),
         maxQuantity: Number(s.max_quantity),
         active: !!s.active,
+        serviceType: (s.service_type as SmmServiceType) ?? "Default",
     }));
 
     return { isAdmin: true, usdIdrRate: Number(settings?.usd_idr_rate ?? 16300), services };
@@ -152,6 +154,7 @@ export async function importAllSmmflareServicesAction(): Promise<{ error: string
             active: true,
             refill: s.refill,
             dripfeed: s.dripfeed,
+            service_type: s.type,
         }));
 
         const BATCH = 500;
@@ -179,6 +182,7 @@ export async function addSmmServiceAction(input: {
     maxQuantity: number;
     refill?: boolean;
     dripfeed?: boolean;
+    serviceType: SmmServiceType;
     // Default nonaktif (admin review dulu sebelum ke pelanggan) — dikasih opsi
     // aktifkan langsung buat kasus "tambah & aktifkan semua hasil pencarian".
     active?: boolean;
@@ -201,6 +205,7 @@ export async function addSmmServiceAction(input: {
         active: input.active ?? false,
         refill: input.refill ?? false,
         dripfeed: input.dripfeed ?? false,
+        service_type: input.serviceType,
     });
     if (error) {
         if (error.message.toLowerCase().includes("duplicate")) return { error: "Layanan ini sudah ada di katalog." };
@@ -238,6 +243,7 @@ export async function refreshSmmServiceRateAction(id: string): Promise<{ error: 
                 max_quantity: match.max,
                 refill: match.refill,
                 dripfeed: match.dripfeed,
+                service_type: match.type,
             })
             .eq("id", id);
         if (error) return { error: "Gagal update. Pastikan akun ini admin." };
@@ -258,26 +264,107 @@ export async function toggleSmmServiceActiveAction(id: string, active: boolean):
     return { error: null };
 }
 
-// Harga jual (price_per_1000) TIDAK diset langsung — dihitung server-side
-// (trigger di Postgres, lihat supabase/smm.sql) dari modal x markup, sama pola
-// dengan updatePackageCostAction.
-export async function updateSmmServiceMarginAction(
-    id: string,
-    costPricePer1000: number,
-    marginPercent: number,
-): Promise<{ error: string | null }> {
-    if (!Number.isFinite(costPricePer1000) || costPricePer1000 < 0) return { error: "Modal tidak valid." };
-    if (!Number.isFinite(marginPercent) || marginPercent < 0) return { error: "Markup tidak valid." };
+// Aktifkan BANYAK layanan sekaligus lewat RPC admin_bulk_set_smm_active
+// (supabase/smm-bulk-margin-update.sql) -- dipakai tombol "Aktifkan semua",
+// satu request buat berapa pun baris, bukan 1 request per layanan (katalog
+// bisa sampai ribuan, sama alasannya dengan updateSmmServicesBulkAction).
+export async function bulkSetSmmActiveAction(ids: string[], active: boolean): Promise<{ error: string | null }> {
+    if (ids.length === 0) return { error: null };
     const { supabase, ok } = await requireAdmin();
     if (!ok) return { error: "Bukan admin." };
-    const { error } = await supabase
-        .from("smm_services")
-        .update({ cost_price_per_1000: costPricePer1000, margin_percent: marginPercent })
-        .eq("id", id);
-    if (error) return { error: "Gagal menyimpan. Pastikan akun ini admin." };
+
+    const BATCH = 1000;
+    for (let i = 0; i < ids.length; i += BATCH) {
+        const { error } = await supabase.rpc("admin_bulk_set_smm_active", { p_ids: ids.slice(i, i + BATCH), p_active: active });
+        if (error) return { error: `Gagal mengaktifkan sebagian (baru ${i} tersimpan): ${error.message}` };
+    }
     revalidatePath("/admin", "layout");
     revalidatePath("/dashboard", "layout");
     return { error: null };
+}
+
+// Harga jual (price_per_1000) TIDAK diset langsung — dihitung server-side
+// (trigger di Postgres, lihat supabase/smm.sql) dari modal x markup, sama pola
+// dengan updatePackageCostAction. Simpan Modal/Markup BANYAK layanan sekaligus
+// lewat RPC admin_bulk_update_smm_margin (supabase/smm-bulk-margin-update.sql)
+// -- satu request/transaksi buat berapa pun baris (katalog bisa sampai
+// ribuan, lihat "Tarik semua layanan smmflare"), bukan upsert (sempat dicoba,
+// gagal kena NOT NULL constraint + resiko reset kolom "active" diam-diam —
+// lihat komentar di file SQL-nya) atau 1 request per baris (bikin "Simpan
+// semua" kelihatan macet belasan menit).
+export async function updateSmmServicesBulkAction(
+    rows: { id: string; costPricePer1000: number; marginPercent: number }[],
+): Promise<{ error: string | null }> {
+    const { supabase, ok } = await requireAdmin();
+    if (!ok) return { error: "Bukan admin." };
+
+    const payload = rows
+        .filter((r) => Number.isFinite(r.costPricePer1000) && r.costPricePer1000 >= 0 && Number.isFinite(r.marginPercent) && r.marginPercent >= 0)
+        .map((r) => ({ id: r.id, cost_price_per_1000: r.costPricePer1000, margin_percent: r.marginPercent }));
+    if (payload.length === 0) return { error: null };
+
+    // Dibagi per batch (sama pola dengan resyncSmmCostFromKursAction) --
+    // katalog bisa sampai ribuan baris, satu panggilan RPC dengan SEMUA baris
+    // sekaligus beresiko kena batas waktu function serverless (Vercel dkk).
+    const BATCH = 1000;
+    for (let i = 0; i < payload.length; i += BATCH) {
+        const { error } = await supabase.rpc("admin_bulk_update_smm_margin", { p_updates: payload.slice(i, i + BATCH) });
+        if (error) return { error: `Gagal menyimpan sebagian (baru ${i} tersimpan): ${error.message}` };
+    }
+
+    revalidatePath("/admin", "layout");
+    revalidatePath("/dashboard", "layout");
+    return { error: null };
+}
+
+// Hitung ulang Modal/1000 SEMUA layanan di katalog pakai kurs USD->IDR yang
+// SEKARANG aktif di Pengaturan — ubah kurs di Pengaturan TIDAK otomatis
+// nge-update Modal yang sudah tersimpan (cuma berlaku buat layanan yang baru
+// ditarik/di-refresh setelahnya), jadi katalog lama bisa "nyangkut" di kurs
+// lama kalau kursnya pernah diubah. Markup % tiap layanan TIDAK disentuh,
+// cuma Modal (dan otomatis Jual ikut, lewat trigger recalc_smm_service_price).
+export async function resyncSmmCostFromKursAction(): Promise<{ error: string | null; updated: number }> {
+    const { supabase, ok } = await requireAdmin();
+    if (!ok) return { error: "Bukan admin.", updated: 0 };
+
+    try {
+        const { data: settings } = await supabase.from("app_settings").select("usd_idr_rate").eq("id", true).maybeSingle();
+        const usdIdrRate = Number(settings?.usd_idr_rate ?? 16300);
+
+        const [live, existing] = await Promise.all([
+            getSmmflareServices(),
+            fetchAllRows(supabase, "smm_services", "id, provider_service_id, margin_percent, cost_price_per_1000"),
+        ]);
+        const rateByServiceId = new Map(live.map((s) => [s.serviceId, s.rateUsd]));
+
+        const updates: { id: string; costPricePer1000: number; marginPercent: number }[] = [];
+        for (const row of existing) {
+            const rateUsd = rateByServiceId.get(Number(row.provider_service_id));
+            if (rateUsd === undefined) continue; // layanan ini udah nggak ada/ganti tipe di smmflare
+            const newCost = Math.round(rateUsd * usdIdrRate);
+            if (newCost !== Number(row.cost_price_per_1000)) {
+                updates.push({ id: row.id as string, costPricePer1000: newCost, marginPercent: Number(row.margin_percent) });
+            }
+        }
+        if (updates.length === 0) return { error: null, updated: 0 };
+
+        const BATCH = 1000;
+        for (let i = 0; i < updates.length; i += BATCH) {
+            const chunk = updates.slice(i, i + BATCH).map((r) => ({
+                id: r.id,
+                cost_price_per_1000: r.costPricePer1000,
+                margin_percent: r.marginPercent,
+            }));
+            const { error } = await supabase.rpc("admin_bulk_update_smm_margin", { p_updates: chunk });
+            if (error) return { error: `Gagal sinkron sebagian (baru ${i} tersimpan): ${error.message}`, updated: i };
+        }
+
+        revalidatePath("/admin", "layout");
+        revalidatePath("/dashboard", "layout");
+        return { error: null, updated: updates.length };
+    } catch (e) {
+        return { error: e instanceof SmmflareError ? e.message : "Gagal ambil data dari supplier.", updated: 0 };
+    }
 }
 
 export type SmmflareBalanceInfo = {

@@ -270,9 +270,40 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
 
     const [link, setLink] = useState("");
     const [quantity, setQuantity] = useState("");
+    const [comments, setComments] = useState("");
     const [err, setErr] = useState("");
     const [buying, setBuying] = useState(false);
     const [done, setDone] = useState<string | null>(null);
+
+    // Shortcut buat yang udah tau persis ID layanan yang mau dipesan (mis.
+    // dari grup/komunitas) -- nggak perlu nyusurin Platform -> Kategori ->
+    // Layanan satu-satu, langsung ketik ID-nya. Begitu ketemu, 3 tingkat
+    // filter di atas ikut disetel ke layanan itu (sama kayak deep-link dari
+    // /dashboard/daftar-layanan) biar tetap konsisten kelihatannya.
+    const [idQuery, setIdQuery] = useState("");
+    const [idErr, setIdErr] = useState("");
+
+    function searchById(e: React.SyntheticEvent) {
+        e.preventDefault();
+        const n = Number(idQuery.trim());
+        if (!idQuery.trim() || !Number.isFinite(n)) {
+            setIdErr("Masukkan ID layanan yang valid.");
+            return;
+        }
+        const found = catalog.find((s) => s.providerServiceId === n);
+        if (!found) {
+            setIdErr("ID layanan tidak ditemukan.");
+            return;
+        }
+        setIdErr("");
+        setPlatform(detectPlatform(found));
+        setRawCategory(found.category);
+        setServiceId(found.id);
+        setIdQuery("");
+        setQuantity("");
+        setComments("");
+        setErr("");
+    }
 
     function pickPlatform(key: string) {
         setPlatform(key);
@@ -282,6 +313,7 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
         setCategoryQuery("");
         setServiceQuery("");
         setQuantity("");
+        setComments("");
         setErr("");
     }
 
@@ -293,6 +325,7 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
         setCategoryOpen(false);
         setServiceQuery("");
         setQuantity("");
+        setComments("");
         setErr("");
     }
 
@@ -301,10 +334,16 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
         setServiceQuery("");
         setServiceOpen(false);
         setQuantity("");
+        setComments("");
         setErr("");
     }
 
-    const quantityNum = Math.max(0, Math.round(Number(quantity) || 0));
+    const isCustomComments = service?.serviceType === "Custom Comments";
+    const commentLines = comments
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+    const quantityNum = isCustomComments ? commentLines.length : Math.max(0, Math.round(Number(quantity) || 0));
     const total = service ? Math.round((service.pricePer1000 * quantityNum) / 1000) : 0;
     const kurang = Math.max(0, total - saldo);
     const qtyTooLow = !!service && quantityNum > 0 && quantityNum < service.minQuantity;
@@ -316,8 +355,16 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
             setErr("Pilih layanan dulu.");
             return;
         }
+        if (isCustomComments && commentLines.length === 0) {
+            setErr("Isi komentar dulu, 1 per baris.");
+            return;
+        }
         if (quantityNum < service.minQuantity || quantityNum > service.maxQuantity) {
-            setErr(`Jumlah harus antara ${num(service.minQuantity)}-${num(service.maxQuantity)}.`);
+            setErr(
+                isCustomComments
+                    ? `Jumlah baris komentar harus antara ${num(service.minQuantity)}-${num(service.maxQuantity)}.`
+                    : `Jumlah harus antara ${num(service.minQuantity)}-${num(service.maxQuantity)}.`,
+            );
             return;
         }
         if (!link.trim()) {
@@ -330,7 +377,11 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
         }
         setErr("");
         setBuying(true);
-        const res = await buySmmOrderAction({ serviceId: service.id, targetLink: link.trim(), quantity: quantityNum });
+        const res = await buySmmOrderAction(
+            isCustomComments
+                ? { serviceId: service.id, targetLink: link.trim(), comments: commentLines.join("\n") }
+                : { serviceId: service.id, targetLink: link.trim(), quantity: quantityNum },
+        );
         setBuying(false);
         if (res.error) {
             setErr(res.error);
@@ -342,6 +393,7 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
         setDone(`Pesanan ${res.orderCode ?? ""} dibayar dengan saldo. Sedang diproses.`);
         setLink("");
         setQuantity("");
+        setComments("");
         router.refresh();
     }
 
@@ -369,7 +421,31 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
                     <div className="s-step">
                         <i>1</i>Pilih layanan
                     </div>
-                    <div className="u-label">Platform</div>
+
+                    <div className="u-label">Sudah tau ID layanannya?</div>
+                    <div style={{ display: "flex", gap: 10 }}>
+                        <div className={`u-input${idErr ? " err" : ""}`} style={{ flex: 1 }}>
+                            <input
+                                inputMode="numeric"
+                                placeholder="Cari langsung pakai ID layanan, mis. 11034"
+                                aria-label="Cari ID layanan"
+                                value={idQuery}
+                                onChange={(e) => {
+                                    setIdQuery(e.target.value.replace(/\D/g, ""));
+                                    setIdErr("");
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") searchById(e);
+                                }}
+                            />
+                        </div>
+                        <button type="button" className="d-pill solid" onClick={searchById}>
+                            Cari
+                        </button>
+                    </div>
+                    {idErr && <div className="u-bad">{idErr}</div>}
+
+                    <div className="u-label u-label-mt">Platform</div>
                     <div className="u-platform-grid" role="tablist" aria-label="Platform">
                         <button
                             type="button"
@@ -490,7 +566,7 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
                                     )}
                                 </div>
                                 <div className="s-detail-stat">
-                                    <span>Min – Maks</span>
+                                    <span>{isCustomComments ? "Min – Maks baris" : "Min – Maks"}</span>
                                     <b>
                                         {num(service.minQuantity)} – {num(service.maxQuantity)}
                                     </b>
@@ -546,27 +622,55 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
                         <p className="d-note d-note-sm-mt">Link profil/postingan yang mau ditambah layanannya. Pastikan linknya publik.</p>
 
                         <div className="s-step s-step-mt">
-                            <i>3</i>Jumlah
+                            <i>3</i>
+                            {isCustomComments ? "Komentar (1 per baris)" : "Jumlah"}
                         </div>
-                        <div className={`u-input ${qtyTooLow || qtyTooHigh ? "err" : ""}`}>
-                            <input
-                                inputMode="numeric"
-                                value={quantity}
-                                onChange={(e) => {
-                                    setQuantity(e.target.value.replace(/\D/g, ""));
-                                    setErr("");
-                                }}
-                                placeholder={service ? `${num(service.minQuantity)}–${num(service.maxQuantity)}` : ""}
-                                aria-label="Jumlah"
-                            />
-                        </div>
+                        {isCustomComments ? (
+                            <div className={`u-input ${qtyTooLow || qtyTooHigh ? "err" : ""}`} style={{ height: "auto", padding: 0 }}>
+                                <textarea
+                                    rows={5}
+                                    value={comments}
+                                    onChange={(e) => {
+                                        setComments(e.target.value);
+                                        setErr("");
+                                    }}
+                                    placeholder={"Satu komentar per baris, mis.\nMantap kontennya!\nKeren banget 🔥"}
+                                    aria-label="Komentar"
+                                    style={{ width: "100%", padding: "14px 16px", border: 0, background: "transparent", font: "inherit", resize: "vertical" }}
+                                />
+                            </div>
+                        ) : (
+                            <div className={`u-input ${qtyTooLow || qtyTooHigh ? "err" : ""}`}>
+                                <input
+                                    inputMode="numeric"
+                                    value={quantity}
+                                    onChange={(e) => {
+                                        setQuantity(e.target.value.replace(/\D/g, ""));
+                                        setErr("");
+                                    }}
+                                    placeholder={service ? `${num(service.minQuantity)}–${num(service.maxQuantity)}` : ""}
+                                    aria-label="Jumlah"
+                                />
+                            </div>
+                        )}
                         {service && !qtyTooLow && !qtyTooHigh && (
                             <p className="d-note d-note-sm-mt">
                                 Min {num(service.minQuantity)} – Max {num(service.maxQuantity)}
+                                {isCustomComments ? " baris komentar" : ""}
                             </p>
                         )}
-                        {qtyTooLow && <span className="u-custom-price bad">Minimal {num(service!.minQuantity)}</span>}
-                        {qtyTooHigh && <span className="u-custom-price bad">Maksimal {num(service!.maxQuantity)}</span>}
+                        {qtyTooLow && (
+                            <span className="u-custom-price bad">
+                                Minimal {num(service!.minQuantity)}
+                                {isCustomComments ? " baris" : ""}
+                            </span>
+                        )}
+                        {qtyTooHigh && (
+                            <span className="u-custom-price bad">
+                                Maksimal {num(service!.maxQuantity)}
+                                {isCustomComments ? " baris" : ""}
+                            </span>
+                        )}
 
                         <div className="s-step s-step-mt">
                             <i>4</i>Pembayaran
@@ -594,7 +698,7 @@ export default function SmmView({ catalog, saldo }: { catalog: SmmServiceRow[]; 
                             <b>{service ? `#${service.providerServiceId} — ${translateServiceName(service.name)}` : "-"}</b>
                         </div>
                         <div className="u-row">
-                            <span>Jumlah</span>
+                            <span>{isCustomComments ? "Baris komentar" : "Jumlah"}</span>
                             <b>{num(quantityNum)}</b>
                         </div>
                         <div className="u-row">

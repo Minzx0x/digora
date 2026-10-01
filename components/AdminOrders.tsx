@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
 import Toast from "./Toast";
+import { useConfirm } from "./useConfirm";
 import {
     adminUpdateOrderStatusAction,
     adminCheckRscOrderAction,
@@ -47,6 +48,7 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
     // buat ini), dipakai buat aktifin tombol "Cek refill" setelah refill diminta.
     const [refillIds, setRefillIds] = useState<Record<string, number>>({});
     const [toast, setToast] = useState<{ text: string; kind: "success" | "error" } | null>(null);
+    const { confirm, dialog } = useConfirm();
 
     const rows = useMemo(
         () =>
@@ -68,7 +70,7 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
                 currentStatus === "ok"
                     ? "Order ini berstatus Selesai. Yakin mau ditandai Gagal? Saldo pembeli akan dikembalikan lagi — pastikan order ini BELUM pernah direfund sebelumnya (mis. sempat Gagal lalu ke-ubah balik jadi Selesai), supaya saldo tidak kembali dua kali."
                     : "Tandai gagal? Saldo pembeli akan otomatis dikembalikan.";
-            if (!window.confirm(msg)) return;
+            if (!(await confirm(msg, { tone: "danger", confirmLabel: "Ya, tandai gagal" }))) return;
         }
         setBusyId(orderId);
         await adminUpdateOrderStatusAction(orderId, status);
@@ -120,7 +122,13 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
     }
 
     async function cancelSmm(orderId: string, providerOrderId: number) {
-        if (!window.confirm("Batalkan pesanan ini di supplier? Saldo pembeli akan otomatis dikembalikan.")) return;
+        if (
+            !(await confirm("Batalkan pesanan ini di supplier? Saldo pembeli akan otomatis dikembalikan.", {
+                tone: "danger",
+                confirmLabel: "Ya, batalkan",
+            }))
+        )
+            return;
         setBusyId(orderId);
         const res = await adminCancelSmmOrderAction(orderId, providerOrderId);
         setBusyId(null);
@@ -131,6 +139,7 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
     return (
         <div className="dash">
             {toast && <Toast message={toast.text} kind={toast.kind} onDone={() => setToast(null)} />}
+            {dialog}
             <AdminSidebar active="pesanan" />
 
             <main className="d-main">
@@ -196,6 +205,12 @@ export default function AdminOrders({ orders }: { orders: AdminOrderRow[] }) {
                                                 </a>
                                             ) : (
                                                 o.username
+                                            )}
+                                            {o.comments && (
+                                                <details className="d-comments">
+                                                    <summary>Lihat komentar ({o.units})</summary>
+                                                    <pre>{o.comments}</pre>
+                                                </details>
                                             )}
                                         </td>
                                         <td>{o.packageLabel}</td>

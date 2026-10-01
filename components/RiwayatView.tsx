@@ -32,7 +32,15 @@ export default function RiwayatView({ orders }: { orders: OrderRow[] }) {
                         {orders.map((o) => (
                             <tr key={o.id}>
                                 <td>{o.id}</td>
-                                <td>{o.to}</td>
+                                <td>
+                                    {o.to}
+                                    {o.comments && (
+                                        <details className="d-comments">
+                                            <summary>Lihat komentar yang dikirim</summary>
+                                            <pre>{o.comments}</pre>
+                                        </details>
+                                    )}
+                                </td>
                                 <td>{o.item}</td>
                                 <td>{rp(o.total)}</td>
                                 <td>

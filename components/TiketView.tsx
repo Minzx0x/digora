@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Toast from "./Toast";
+import { useConfirm } from "./useConfirm";
 import {
     getMyTicketsAction,
     getTicketThreadAction,
@@ -56,6 +57,7 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
     const [sending, setSending] = useState(false);
     const [replyErr, setReplyErr] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { confirm, dialog } = useConfirm();
 
     const [showNewForm, setShowNewForm] = useState(false);
     const [newCategory, setNewCategory] = useState(CATEGORIES[0].label);
@@ -148,7 +150,7 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
 
     async function doClose() {
         if (!selectedId) return;
-        if (!window.confirm("Tutup tiket ini? Kamu tetap bisa balas lagi nanti kalau masih ada kendala.")) return;
+        if (!(await confirm("Tutup tiket ini? Kamu tetap bisa balas lagi nanti kalau masih ada kendala.", { confirmLabel: "Ya, tutup" }))) return;
         await closeTicketAction(selectedId);
         setTickets((prev) => prev.map((t) => (t.id === selectedId ? { ...t, status: "closed" } : t)));
         router.refresh();
@@ -159,6 +161,7 @@ export default function TiketView({ tickets: initialTickets }: { tickets: Ticket
     return (
         <section className="d-card">
             {replyErr && <Toast message={replyErr} kind="error" onDone={() => setReplyErr(null)} />}
+            {dialog}
             <div className="d-card-head">
                 <h2>Tiket saya</h2>
                 {!selectedId && (

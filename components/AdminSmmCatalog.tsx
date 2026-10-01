@@ -4,13 +4,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
 import Toast from "./Toast";
+import { useConfirm } from "./useConfirm";
 import {
     searchSmmflareServicesAction,
     addSmmServiceAction,
     importAllSmmflareServicesAction,
     refreshSmmServiceRateAction,
     toggleSmmServiceActiveAction,
-    updateSmmServiceMarginAction,
+    bulkSetSmmActiveAction,
+    updateSmmServicesBulkAction,
+    resyncSmmCostFromKursAction,
     type SmmAdminServiceRow,
 } from "@/lib/actions/admin-smm";
 import type { SmmflareService } from "@/lib/smmflare";
@@ -37,7 +40,9 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
     const [savedAll, setSavedAll] = useState(false);
     const [bulkMargin, setBulkMargin] = useState("");
     const [activatingAll, setActivatingAll] = useState(false);
+    const [resyncingKurs, setResyncingKurs] = useState(false);
     const [toast, setToast] = useState<{ text: string; kind: "success" | "error" } | null>(null);
+    const { confirm, dialog } = useConfirm();
 
     const [cost, setCost] = useState<Record<string, string>>(
         Object.fromEntries(services.map((s) => [s.id, String(s.costPricePer1000)])),
@@ -80,6 +85,7 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
             maxQuantity: s.max,
             refill: s.refill,
             dripfeed: s.dripfeed,
+            serviceType: s.type,
             active,
         });
         setAddingId(null);
@@ -96,7 +102,7 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
     async function addAllResults() {
         const toAdd = results.filter((s) => !addedIds.has(s.serviceId));
         if (toAdd.length === 0) return;
-        if (!window.confirm(`Tambah & aktifkan ${toAdd.length} layanan sekaligus?`)) return;
+        if (!(await confirm(`Tambah & aktifkan ${toAdd.length} layanan sekaligus?`, { confirmLabel: "Ya, tambah semua" }))) return;
         setBulkAdding(true);
         for (const s of toAdd) {
             await addSmmServiceAction({
@@ -108,6 +114,7 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
                 maxQuantity: s.max,
                 refill: s.refill,
                 dripfeed: s.dripfeed,
+                serviceType: s.type,
                 active: true,
             });
         }
@@ -120,9 +127,10 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
     // Yang sudah ada di katalog nggak disentuh (modal/markup custom aman).
     async function importAll() {
         if (
-            !window.confirm(
+            !(await confirm(
                 "Tarik SEMUA layanan dari smmflare sekaligus (bisa ribuan, langsung aktif)? Proses ini bisa makan waktu beberapa saat.",
-            )
+                { confirmLabel: "Ya, tarik semua" },
+            ))
         )
             return;
         setImportingAll(true);
@@ -147,10 +155,14 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
         const changed = services.filter(
             (s) => Number(cost[s.id]) !== s.costPricePer1000 || Number(margin[s.id]) !== s.marginPercent,
         );
-        for (const s of changed) {
-            await updateSmmServiceMarginAction(s.id, Number(cost[s.id]) || 0, Number(margin[s.id]) || 0);
-        }
+        const res = await updateSmmServicesBulkAction(
+            changed.map((s) => ({ id: s.id, costPricePer1000: Number(cost[s.id]) || 0, marginPercent: Number(margin[s.id]) || 0 })),
+        );
         setSavingAll(false);
+        if (res.error) {
+            setToast({ text: res.error, kind: "error" });
+            return;
+        }
         setSavedAll(true);
         router.refresh();
         setTimeout(() => setSavedAll(false), 1800);
@@ -185,12 +197,40 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
     async function activateAll() {
         const toActivate = services.filter((s) => !s.active);
         if (toActivate.length === 0) return;
-        if (!window.confirm(`Aktifkan ${toActivate.length} layanan sekaligus?`)) return;
+        if (!(await confirm(`Aktifkan ${toActivate.length} layanan sekaligus?`, { confirmLabel: "Ya, aktifkan semua" }))) return;
         setActivatingAll(true);
-        for (const s of toActivate) {
-            await toggleSmmServiceActiveAction(s.id, true);
-        }
+        const res = await bulkSetSmmActiveAction(toActivate.map((s) => s.id), true);
         setActivatingAll(false);
+        if (res.error) {
+            setToast({ text: res.error, kind: "error" });
+            return;
+        }
+        router.refresh();
+    }
+
+    // Modal/1000 yang sudah tersimpan TIDAK otomatis ngikut kalau kurs di
+    // Pengaturan diubah belakangan -- cuma layanan yang baru ditarik/di-refresh
+    // SETELAH itu yang kepakai kurs baru. Ini nyamain ulang Modal SEMUA layanan
+    // ke kurs yang sekarang aktif (markup % tiap layanan TETAP, cuma Modal &
+    // Jual yang ikut berubah).
+    async function resyncKurs() {
+        if (
+            !(await confirm("Hitung ulang Modal/1000 SEMUA layanan pakai kurs yang sekarang aktif di Pengaturan? Markup % tiap layanan tetap sama.", {
+                confirmLabel: "Ya, sinkronkan",
+            }))
+        )
+            return;
+        setResyncingKurs(true);
+        const res = await resyncSmmCostFromKursAction();
+        setResyncingKurs(false);
+        if (res.error) {
+            setToast({ text: res.error, kind: "error" });
+            return;
+        }
+        setToast({
+            text: res.updated > 0 ? `Modal ${res.updated} layanan disinkronkan ke kurs terbaru.` : "Semua layanan sudah pakai kurs terbaru.",
+            kind: "success",
+        });
         router.refresh();
     }
 
@@ -200,6 +240,7 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
     return (
         <div className="dash">
             {toast && <Toast message={toast.text} kind={toast.kind} onDone={() => setToast(null)} />}
+            {dialog}
             <AdminSidebar active="smm" />
 
             <main className="d-main">
@@ -236,8 +277,9 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
                     </form>
                     <p className="d-note">
                         Hasil pencarian ditarik LANGSUNG dari smmflare (tidak disimpan ke database) — cuma layanan bertipe
-                        &quot;Default&quot; (link + jumlah biasa) yang muncul. Klik &quot;+ Tambah&quot; buat masukin ke katalog
-                        Digora (nonaktif dulu, atur markup lalu aktifkan di bawah).
+                        &quot;Default&quot; (link + jumlah biasa) atau &quot;Custom Comments&quot; (link + teks komentar sendiri,
+                        ditandai badge) yang muncul. Klik &quot;+ Tambah&quot; buat masukin ke katalog Digora (nonaktif dulu,
+                        atur markup lalu aktifkan di bawah).
                     </p>
                     {searchErr && <p className="d-note d-rsc-msg">{searchErr}</p>}
                     {results.length > 0 && (
@@ -261,7 +303,14 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
                                 <tbody>
                                     {results.map((s) => (
                                         <tr key={s.serviceId}>
-                                            <td>{translateServiceName(s.name)}</td>
+                                            <td>
+                                                {translateServiceName(s.name)}
+                                                {s.type === "Custom Comments" && (
+                                                    <span className="d-badge proc" style={{ marginLeft: 6 }}>
+                                                        Custom Comments
+                                                    </span>
+                                                )}
+                                            </td>
                                             <td className="mute">{translateServiceName(s.category)}</td>
                                             <td>${s.rateUsd.toFixed(3)}</td>
                                             <td className="mute">
@@ -298,6 +347,9 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
                                     {activatingAll ? "Mengaktifkan…" : `Aktifkan semua (${inactiveCount})`}
                                 </button>
                             )}
+                            <button type="button" className="d-pill solid" disabled={resyncingKurs} onClick={resyncKurs}>
+                                {resyncingKurs ? "Menyinkronkan…" : "↻ Sinkron modal ke kurs terbaru"}
+                            </button>
                             <button className="d-btn" style={{ padding: "8px 18px" }} onClick={saveAllPrices} disabled={savingAll}>
                                 {savingAll ? "Menyimpan…" : savedAll ? "Tersimpan ✓" : "Simpan semua"}
                             </button>
@@ -334,9 +386,15 @@ export default function AdminSmmCatalog({ services }: { services: SmmAdminServic
                             <div className="d-pack-info">
                                 <div className="d-pack-name">
                                     {translateServiceName(s.name)} {!s.active && <span className="d-pack-note">(nonaktif)</span>}
+                                    {s.serviceType === "Custom Comments" && (
+                                        <span className="d-badge proc" style={{ marginLeft: 6 }}>
+                                            Custom Comments
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="d-pack-note">
                                     {translateServiceName(s.category)} · {num(s.minQuantity)}–{num(s.maxQuantity)}
+                                    {s.serviceType === "Custom Comments" ? " baris komentar" : ""}
                                 </div>
                             </div>
                             <div className="d-pack-fields">

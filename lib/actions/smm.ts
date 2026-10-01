@@ -2,18 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { addSmmflareOrder } from "@/lib/smmflare";
+import { addSmmflareOrder, type SmmServiceType } from "@/lib/smmflare";
 
 export type SmmServiceRow = {
     id: string;
     providerServiceId: number;
     category: string;
     name: string;
-    pricePer1000: number; // harga jual IDR per 1000 unit
+    pricePer1000: number; // harga jual IDR per 1000 unit (atau per 1000 komentar)
     minQuantity: number;
     maxQuantity: number;
     refill: boolean;
     dripfeed: boolean;
+    serviceType: SmmServiceType;
 };
 
 export type SmmServiceEta = { avgMinutes: number | null; sampleSize: number };
@@ -74,7 +75,7 @@ export async function getSmmCatalog(): Promise<SmmServiceRow[]> {
     for (;;) {
         const { data, error } = await supabase
             .from("smm_services")
-            .select("id, provider_service_id, category, name, price_per_1000, min_quantity, max_quantity, refill, dripfeed")
+            .select("id, provider_service_id, category, name, price_per_1000, min_quantity, max_quantity, refill, dripfeed, service_type")
             .eq("active", true)
             .order("category", { ascending: true })
             .order("sort_order", { ascending: true })
@@ -107,6 +108,7 @@ export async function getSmmCatalog(): Promise<SmmServiceRow[]> {
         maxQuantity: Number(s.max_quantity),
         refill: !!s.refill,
         dripfeed: !!s.dripfeed,
+        serviceType: (s.service_type as SmmServiceType) ?? "Default",
     }));
 }
 
@@ -123,9 +125,11 @@ function friendlySmmDbError(message: string): string {
 export async function buySmmOrderAction(input: {
     serviceId: string;
     targetLink: string;
-    quantity: number;
+    quantity?: number;
+    comments?: string;
 }): Promise<{ error: string | null; orderCode?: string }> {
-    if (!Number.isFinite(input.quantity) || input.quantity <= 0) {
+    const comments = input.comments?.trim() || undefined;
+    if (!comments && (!Number.isFinite(input.quantity) || (input.quantity ?? 0) <= 0)) {
         return { error: "Jumlah tidak valid." };
     }
 
@@ -139,12 +143,13 @@ export async function buySmmOrderAction(input: {
     }
 
     const supabase = await createClient();
-    const quantity = Math.round(input.quantity);
+    const quantity = input.quantity !== undefined ? Math.round(input.quantity) : undefined;
 
     const { data, error } = await supabase.rpc("buy_smm_with_saldo", {
         p_service_id: input.serviceId,
         p_target_link: link,
-        p_quantity: quantity,
+        p_quantity: quantity ?? null,
+        p_comments: comments ?? null,
     });
     if (error) {
         // Pesan asli dari RPC sebelumnya TIDAK PERNAH kelogging di sini sama
@@ -173,7 +178,7 @@ export async function buySmmOrderAction(input: {
             const providerServiceId = Number(serviceRow?.provider_service_id);
             if (!providerServiceId) throw new Error("provider_service_id_missing");
 
-            const smmOrder = await addSmmflareOrder(providerServiceId, link, quantity);
+            const smmOrder = await addSmmflareOrder(providerServiceId, link, comments ? { comments } : { quantity: quantity! });
             await supabase.rpc("sync_smm_order_from_provider", {
                 p_order_id: order.id,
                 p_provider_order_id: smmOrder.orderId,

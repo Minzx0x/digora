@@ -8,9 +8,11 @@
 // Beda dari RSC (REST, satu path per aksi), smmflare pakai satu endpoint yang
 // sama buat semua aksi (POST ke /api/v2, dibedakan lewat field "action" di body)
 // — pola umum "SMM Panel API" yang dipakai hampir semua provider sejenis.
-// v1 SENGAJA cuma dukung layanan bertipe "Default" (link + quantity biasa) —
-// tipe lain (Custom Comments, Package, Mentions dengan hashtag, dst) butuh field
-// tambahan yang beda-beda per tipe dan di luar scope sekarang. Varian "banyak
+// v1 dukung 2 tipe: "Default" (link + quantity biasa) dan "Custom Comments"
+// (link + daftar komentar sendiri, 1 per baris -- "jumlah" dihitung dari
+// banyak barisnya, lihat buy_smm_with_saldo di supabase/smm-custom-comments.sql).
+// Tipe lain (Package, Mentions dengan hashtag, Subscriptions, dst) butuh field
+// tambahan yang beda-beda lagi dan masih di luar scope. Varian "banyak
 // sekaligus" (multi-order/mass order, multi refill status) SENGAJA belum
 // diimplementasikan — nunggu fitur order massal ada dulu, baru relevan.
 
@@ -97,12 +99,14 @@ function toNum(v: unknown): number | null {
     return null;
 }
 
+export type SmmServiceType = "Default" | "Custom Comments";
+
 export type SmmflareService = {
     serviceId: number;
     name: string;
-    type: string;
+    type: SmmServiceType;
     category: string;
-    rateUsd: number; // harga per 1000 unit, dalam USD
+    rateUsd: number; // harga per 1000 unit (atau per 1000 komentar), dalam USD
     min: number;
     max: number;
     refill: boolean;
@@ -110,7 +114,9 @@ export type SmmflareService = {
     dripfeed: boolean;
 };
 
-/** Daftar layanan dari smmflare — cuma yang bertipe "Default" (link+quantity biasa) yang dikembalikan. */
+const SUPPORTED_TYPES: SmmServiceType[] = ["Default", "Custom Comments"];
+
+/** Daftar layanan dari smmflare — cuma tipe yang didukung Digora (lihat SUPPORTED_TYPES) yang dikembalikan. */
 export async function getSmmflareServices(): Promise<SmmflareService[]> {
     const json = await smmflareRequest("services");
     if (!Array.isArray(json)) {
@@ -121,7 +127,7 @@ export async function getSmmflareServices(): Promise<SmmflareService[]> {
     for (const row of json) {
         if (!row || typeof row !== "object") continue;
         const r = row as Record<string, unknown>;
-        if (r.type !== "Default") continue;
+        if (!SUPPORTED_TYPES.includes(r.type as SmmServiceType)) continue;
         const serviceId = toNum(r.service);
         const rateUsd = toNum(r.rate);
         const min = toNum(r.min);
@@ -131,13 +137,13 @@ export async function getSmmflareServices(): Promise<SmmflareService[]> {
         // visual di antara layanan asli buat ngelompokkin tampilan di panel
         // mereka sendiri (mis. nama "---- Instagram Categories ----", rate
         // $9999, min=max=1) — bukan layanan sungguhan, jangan sampai ke-tambah.
-        // Layanan bertipe "Default" itu SELALU quantity fleksibel (bukan paket
-        // tetap), jadi min===max di sini pasti bukan layanan nyata.
+        // Layanan bertipe Default/Custom Comments itu SELALU quantity fleksibel
+        // (bukan paket tetap), jadi min===max di sini pasti bukan layanan nyata.
         if (min === max || rateUsd > 1000) continue;
         out.push({
             serviceId,
             name: typeof r.name === "string" ? r.name : `Service #${serviceId}`,
-            type: "Default",
+            type: r.type as SmmServiceType,
             category: typeof r.category === "string" ? r.category : "Lainnya",
             rateUsd,
             min,
@@ -150,9 +156,24 @@ export async function getSmmflareServices(): Promise<SmmflareService[]> {
     return out;
 }
 
-/** Kirim satu pesanan SMM ke smmflare — akun kamu (smmflare) yang kepotong, bukan Digora. */
-export async function addSmmflareOrder(serviceId: number, link: string, quantity: number): Promise<{ orderId: number }> {
-    const json = await smmflareRequest("add", { service: serviceId, link, quantity });
+/**
+ * Kirim satu pesanan SMM ke smmflare — akun kamu (smmflare) yang kepotong,
+ * bukan Digora. Layanan tipe "Default" kirim quantity biasa; "Custom Comments"
+ * kirim teks komentar (1 per baris) sebagai ganti quantity — smmflare yang
+ * menghitung jumlahnya dari banyak baris di comments.
+ */
+export async function addSmmflareOrder(
+    serviceId: number,
+    link: string,
+    opts: { quantity: number } | { comments: string },
+): Promise<{ orderId: number }> {
+    const params: Record<string, unknown> = { service: serviceId, link };
+    if ("comments" in opts) {
+        params.comments = opts.comments;
+    } else {
+        params.quantity = opts.quantity;
+    }
+    const json = await smmflareRequest("add", params);
     const obj = (json && typeof json === "object" ? json : {}) as Record<string, unknown>;
     const orderId = toNum(obj.order);
     if (orderId === null) {
