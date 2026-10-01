@@ -13,12 +13,12 @@ const H = 300;
 // berjenjang (paling besar di ujung, mengecil ke tengah) biar tetap kerasa
 // "ramai tapi rapi", bukan numpuk.
 const ICONS: { Icon: typeof FaTelegram; bg: string; x: number; y: number; size: number; delay: string }[] = [
-    { Icon: FaTelegram, bg: "#26A5E4", x: 60, y: 120, size: 72, delay: "-1s" },
-    { Icon: FaFacebook, bg: "#1877F2", x: 220, y: 185, size: 60, delay: "-2.5s" },
-    { Icon: FaTiktok, bg: "#000000", x: 380, y: 235, size: 52, delay: "-4s" },
-    { Icon: FaYoutube, bg: "#FF0000", x: 520, y: 235, size: 52, delay: "-1.5s" },
-    { Icon: FaXTwitter, bg: "#000000", x: 680, y: 185, size: 60, delay: "-3.5s" },
-    { Icon: FaInstagram, bg: "#E4405F", x: 840, y: 120, size: 72, delay: "-2s" },
+    { Icon: FaTelegram, bg: "#26A5E4", x: 85, y: 120, size: 108, delay: "-1s" },
+    { Icon: FaFacebook, bg: "#1877F2", x: 220, y: 185, size: 90, delay: "-2.5s" },
+    { Icon: FaTiktok, bg: "#000000", x: 380, y: 235, size: 78, delay: "-4s" },
+    { Icon: FaYoutube, bg: "#FF0000", x: 520, y: 235, size: 78, delay: "-1.5s" },
+    { Icon: FaXTwitter, bg: "#000000", x: 680, y: 185, size: 90, delay: "-3.5s" },
+    { Icon: FaInstagram, bg: "#E4405F", x: 815, y: 120, size: 108, delay: "-2s" },
 ];
 
 /** Ilustrasi hero: ikon platform melengkung. Ukuran desain tetap 900x300, di-scale dari luar (lihat Hero.tsx). */

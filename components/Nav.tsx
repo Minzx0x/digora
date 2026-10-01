@@ -6,12 +6,15 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 // CTA terpisah di sebelah nav ini (lihat Hero.tsx & FloatingNav.tsx), gaya
 // "nav link di tengah + tombol CTA sendiri" ala landing page agency, bukan
 // digabung satu pill kayak sebelumnya.
-const ITEMS = [
+// Diekspor supaya menu hamburger mobile (Hero.tsx) bisa pakai daftar link yang
+// sama persis, bukan nyalin ulang -- satu sumber kebenaran buat isi nav.
+export const NAV_ITEMS = [
   { href: "#smm", label: "SMM Panel", id: "smm" },
   { href: "#produk", label: "Paket Stars", id: "produk" },
   { href: "#harga", label: "Harga", id: "harga" },
   { href: "#bantuan", label: "Bantuan", id: "bantuan" },
 ];
+const ITEMS = NAV_ITEMS;
 
 export default function Nav() {
   // -1 = belum ada section yang aktif (posisi di paling atas halaman) --

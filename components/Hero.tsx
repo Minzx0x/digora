@@ -4,7 +4,7 @@ import { useLayoutEffect, useState } from "react";
 import ScaleBox from "./ScaleBox";
 import HeroArc from "./HeroArc";
 import Brand from "./Brand";
-import Nav from "./Nav";
+import Nav, { NAV_ITEMS } from "./Nav";
 
 const TITLE = (
   <>
@@ -31,6 +31,7 @@ export default function Hero() {
   const [w, setW] = useState(DESIGN_W);
   // sembunyikan sampai ukuran layar terukur, supaya tidak ada "loncatan" saat pindah halaman
   const [ready, setReady] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useLayoutEffect(() => {
     const update = () => {
@@ -65,10 +66,45 @@ export default function Hero() {
       <div className="card m-card" style={{ visibility: ready ? "visible" : "hidden" }}>
         <div className="m-top">
           <Brand />
-          <a className="btn-dark" href="/daftar" style={{ marginLeft: 0 }}>
-            Daftar sekarang
-          </a>
+          <button
+            type="button"
+            className="m-menu-btn"
+            aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((v) => !v)}
+          >
+            {menuOpen ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            )}
+          </button>
         </div>
+        {menuOpen && (
+          <nav className="m-menu" aria-label="Navigasi utama">
+            {NAV_ITEMS.map((it) => (
+              <a key={it.label} href={it.href} onClick={() => setMenuOpen(false)}>
+                {it.label}
+              </a>
+            ))}
+            <a href="/blog" onClick={() => setMenuOpen(false)}>
+              Blog
+            </a>
+            <div className="m-menu-divider" />
+            <div className="m-menu-auth">
+              <a className="m-menu-login" href="/login" onClick={() => setMenuOpen(false)}>
+                Masuk
+              </a>
+              <a className="m-menu-daftar" href="/daftar" onClick={() => setMenuOpen(false)}>
+                Daftar
+              </a>
+            </div>
+          </nav>
+        )}
         <div className="m-body">
           <div className="m-text m-text-center">
             <p className="eyebrow" style={{ margin: "0 auto 16px" }}>
@@ -82,7 +118,7 @@ export default function Hero() {
               </a>
             </div>
           </div>
-          <div style={{ padding: "0 24px" }}>
+          <div style={{ padding: "0 10px" }}>
             <ScaleBox width={ARC_W} height={ARC_H}>
               <HeroArc />
             </ScaleBox>

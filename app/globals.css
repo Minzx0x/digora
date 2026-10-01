@@ -167,6 +167,96 @@ a {
   padding: 20px 20px 4px;
 }
 
+.m-menu-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid #e4e6ee;
+  background: #ffffff;
+  color: #0b0b0c;
+}
+
+/* Dropdown link nav buat HP -- desktop pakai pill .nav yang nav-spy ke
+   section, versi mobile ini sengaja simpel (daftar link biasa, nutup
+   sendiri abis diklik), bukan nyalin scroll-spy yang nggak relevan di
+   layar sempit. */
+.m-menu {
+  display: flex;
+  flex-direction: column;
+  margin: 4px 20px 0;
+  padding: 8px;
+  border-radius: 20px;
+  background: #f4f4f6;
+  animation: m-menu-in 0.2s ease;
+}
+
+.m-menu a {
+  padding: 13px 14px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #35353c;
+}
+
+.m-menu a:hover {
+  background: #ffffff;
+}
+
+.m-menu-divider {
+  margin: 6px 14px;
+  border-top: 1px solid #e4e6ee;
+}
+
+.m-menu-auth {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+}
+
+.m-menu-auth a {
+  flex: 1;
+  padding: 13px 14px;
+  border-radius: 14px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.m-menu-auth .m-menu-login {
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1.5px #e4e6ee;
+  color: #0b0b0c;
+}
+
+.m-menu-auth .m-menu-daftar {
+  background: #0b0b0c;
+  color: #ffffff;
+}
+
+/* Beda dari link biasa di atasnya -- dua tombol ini sengaja TIDAK ikut
+   .m-menu a:hover (yang nyetel background putih polos, bikin teks tombol
+   "Daftar" ketimpa putih-di-atas-putih kalau ke-hover/ke-tap-sticky). */
+.m-menu-auth .m-menu-login:hover {
+  background: #ffffff;
+}
+
+.m-menu-auth .m-menu-daftar:hover {
+  background: #0b0b0c;
+}
+
+@keyframes m-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .m-body {
   display: flex;
   flex: 1;

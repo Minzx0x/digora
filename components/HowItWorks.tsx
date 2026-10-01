@@ -15,7 +15,7 @@ const STEPS = [
         n: "2",
         title: "Isi tujuan & bayar",
         text: "Masukkan username Telegram atau link/username akun media sosial tujuan, pilih metode pembayaran, lalu selesaikan pembayaran.",
-        art: <IconBadge icon={FaWallet} bg="#12874a" className="float" style={art} />,
+        art: <IconBadge icon={FaWallet} bg="#2540ff" className="float" style={art} />,
     },
     {
         n: "3",
