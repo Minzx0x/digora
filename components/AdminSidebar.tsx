@@ -18,6 +18,7 @@ const I = {
     chat: "M4 4h16v11H8l-4 4z",
     gear: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M19 12l2-1-2-4-2 .5-1.5-1L15 4H9l-.5 2.5-1.5 1L5 7l-2 4 2 1v1l-2 1 2 4 2-.5 1.5 1L9 20h6l.5-2.5 1.5-1 2 .5 2-4-2-1z",
     out: "M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9",
+    pen: "M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3zM13.5 7.5l3 3",
 };
 
 function Ico({ d }: { d: string }) {
@@ -28,7 +29,7 @@ function Ico({ d }: { d: string }) {
     );
 }
 
-export type AdminSection = "ringkasan" | "statistik" | "pesanan" | "paket" | "smm" | "pelanggan" | "pembayaran" | "tiket" | "pengaturan";
+export type AdminSection = "ringkasan" | "statistik" | "pesanan" | "paket" | "smm" | "blog" | "pelanggan" | "pembayaran" | "tiket" | "pengaturan";
 
 // Sidebar admin dipakai bareng di semua halaman /admin/* supaya navigasinya
 // konsisten. "active" menandai menu mana yang sedang dibuka (bold + latar hitam).
@@ -84,6 +85,7 @@ export default function AdminSidebar({ active }: { active: AdminSection }) {
                     {link("pesanan", "/admin/pesanan", I.bag, "Pesanan")}
                     {link("paket", "/admin/paket", I.tag, "Paket & Harga")}
                     {link("smm", "/admin/smm", I.trend, "SMM Panel")}
+                    {link("blog", "/admin/blog", I.pen, "Blog")}
                     {link("pelanggan", "/admin/pelanggan", I.users, "Pelanggan")}
                     {link("pembayaran", "/admin/pembayaran", I.card, "Pembayaran")}
                     {link("tiket", "/admin/tiket", I.chat, "Tiket Support")}

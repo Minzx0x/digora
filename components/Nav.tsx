@@ -81,6 +81,12 @@ export default function Nav() {
           {it.label}
         </a>
       ))}
+      {/* Rute halaman sungguhan (bukan anchor section di halaman ini), jadi
+          sengaja di luar ITEMS/scroll-spy di atas -- nggak ada status "aktif"
+          yang perlu dilacak lewat scroll. */}
+      <a className="nav-link" href="/blog">
+        Blog
+      </a>
     </nav>
   );
 }

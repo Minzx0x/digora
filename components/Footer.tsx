@@ -33,6 +33,7 @@ export default function Footer() {
                         <a href="#cara-order">Cara order</a>
                         <a href="#bantuan">FAQ</a>
                         <a href="#beli">Hubungi admin</a>
+                        <a href="/blog">Blog</a>
                     </div>
                 </nav>
             </div>
