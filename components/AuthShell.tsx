@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Brand from "./Brand";
 import AuthForm from "./AuthForm";
 import { FaStar, FaPaperPlane, FaBolt, FaGift } from "react-icons/fa6";
@@ -71,7 +71,9 @@ export default function AuthShell({ initial }: { initial: Mode }) {
                 </div>
                 <div className="auth-center">
                     <div className="auth-box">
-                        <AuthForm mode={m} onSwitch={() => go(m === "login" ? "register" : "login")} />
+                        <Suspense fallback={null}>
+                            <AuthForm mode={m} onSwitch={() => go(m === "login" ? "register" : "login")} />
+                        </Suspense>
                     </div>
                 </div>
             </section>

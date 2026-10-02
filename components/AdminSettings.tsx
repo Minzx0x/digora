@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminSidebar from "./AdminSidebar";
-import { updateUsdIdrRateAction, addStockAction, type SettingsData } from "@/lib/actions/admin";
+import { updateUsdIdrRateAction, addStockAction, updateReferralBonusAction, type SettingsData } from "@/lib/actions/admin";
 import { changePasswordAction } from "@/lib/actions/data";
 
 export default function AdminSettings({ data }: { data: SettingsData }) {
@@ -18,6 +18,12 @@ export default function AdminSettings({ data }: { data: SettingsData }) {
     const [stockSaved, setStockSaved] = useState(false);
     const [stockError, setStockError] = useState<string | null>(null);
 
+    const [bonusPercent, setBonusPercent] = useState(String(data.referralBonusPercent));
+    const [bonusCap, setBonusCap] = useState(String(data.referralBonusCap));
+    const [bonusSaving, setBonusSaving] = useState(false);
+    const [bonusSaved, setBonusSaved] = useState(false);
+    const [bonusError, setBonusError] = useState<string | null>(null);
+
     const [showOldPw, setShowOldPw] = useState(false);
     const [showNewPw, setShowNewPw] = useState(false);
     const [pwMsg, setPwMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -29,7 +35,9 @@ export default function AdminSettings({ data }: { data: SettingsData }) {
     useEffect(() => {
         setRate(String(data.usdIdrRate));
         setStock(String(data.stock));
-    }, [data.usdIdrRate, data.stock]);
+        setBonusPercent(String(data.referralBonusPercent));
+        setBonusCap(String(data.referralBonusCap));
+    }, [data.usdIdrRate, data.stock, data.referralBonusPercent, data.referralBonusCap]);
 
     async function saveRate() {
         const n = Number(rate);
@@ -73,6 +81,30 @@ export default function AdminSettings({ data }: { data: SettingsData }) {
         setStockSaved(true);
         router.refresh();
         setTimeout(() => setStockSaved(false), 1800);
+    }
+
+    async function saveBonus() {
+        const percent = Number(bonusPercent);
+        const cap = Number(bonusCap);
+        if (!Number.isFinite(percent) || percent < 0 || percent > 50) {
+            setBonusError("Persentase tidak valid (maks 50%).");
+            return;
+        }
+        if (!Number.isFinite(cap) || cap < 0) {
+            setBonusError("Nominal maksimal tidak valid.");
+            return;
+        }
+        setBonusError(null);
+        setBonusSaving(true);
+        const res = await updateReferralBonusAction(percent, cap);
+        setBonusSaving(false);
+        if (res.error) {
+            setBonusError(res.error);
+            return;
+        }
+        setBonusSaved(true);
+        router.refresh();
+        setTimeout(() => setBonusSaved(false), 1800);
     }
 
     async function savePw(e: React.FormEvent<HTMLFormElement>) {
@@ -185,6 +217,41 @@ export default function AdminSettings({ data }: { data: SettingsData }) {
                             ditampilkan di sini.
                         </p>
                     </div>
+                </section>
+
+                <section className="d-card">
+                    <div className="d-card-head">
+                        <h2>Komisi referral (Ajak Teman)</h2>
+                    </div>
+                    <p className="d-note" style={{ marginBottom: 12 }}>
+                        Yang NGAJAK dapat komisi persentase dari nominal deposit pertama temannya (dikunci ke maksimal
+                        tertentu) begitu temannya top up saldo untuk pertama kali. Yang diajak sendiri tidak dapat bonus
+                        tambahan.
+                    </p>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            saveBonus();
+                        }}
+                        style={{ display: "flex", flexDirection: "column", gap: 14 }}
+                    >
+                        <label className="d-rsc-rate">
+                            Komisi (% dari deposit pertama teman)
+                            <input inputMode="numeric" value={bonusPercent} onChange={(e) => setBonusPercent(e.target.value.replace(/[^\d.]/g, ""))} />
+                        </label>
+                        <label className="d-rsc-rate">
+                            Maksimal komisi per referral (Rp)
+                            <input inputMode="numeric" value={bonusCap} onChange={(e) => setBonusCap(e.target.value.replace(/\D/g, ""))} />
+                        </label>
+                        <button type="submit" className="d-btn" style={{ alignSelf: "flex-start", padding: "8px 18px" }} disabled={bonusSaving}>
+                            {bonusSaving ? "Menyimpan…" : bonusSaved ? "Tersimpan ✓" : "Simpan komisi"}
+                        </button>
+                        {bonusError && (
+                            <p className="d-note" style={{ color: "#dc2626" }}>
+                                {bonusError}
+                            </p>
+                        )}
+                    </form>
                 </section>
 
                 <section className="d-card">

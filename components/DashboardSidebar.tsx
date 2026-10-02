@@ -18,6 +18,7 @@ const I = {
     chat: "M4 4h16v11H8l-4 4z",
     list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01",
     out: "M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9",
+    gift: "M20 12v9H4v-9M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7",
 };
 
 function Ico({ d }: { d: string }) {
@@ -28,7 +29,7 @@ function Ico({ d }: { d: string }) {
     );
 }
 
-export type DashboardSection = "beranda" | "saldo" | "stars" | "smm" | "daftar-layanan" | "riwayat" | "tiket" | "profil" | "bantuan";
+export type DashboardSection = "beranda" | "saldo" | "stars" | "smm" | "daftar-layanan" | "riwayat" | "tiket" | "profil" | "referral" | "bantuan";
 
 // Sidebar dashboard pelanggan dipakai bareng di semua halaman /dashboard/* —
 // sama pola-nya dengan AdminSidebar buat /admin/*, supaya navigasi jadi route
@@ -74,6 +75,7 @@ export default function DashboardSidebar({ active }: { active: DashboardSection 
                     {link("riwayat", "/dashboard/riwayat", I.bag, "Pesanan saya")}
                     {link("tiket", "/dashboard/tiket", I.chat, "Tiket")}
                     {link("profil", "/dashboard/profil", I.user, "Profil")}
+                    {link("referral", "/dashboard/referral", I.gift, "Ajak Teman")}
                     {link("bantuan", "/dashboard/bantuan", I.help, "Bantuan")}
                     <a
                         className="d-link"

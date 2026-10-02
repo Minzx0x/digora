@@ -31,6 +31,7 @@ export async function signUpAction(input: {
     password: string;
     name: string;
     username: string;
+    referralCode?: string;
 }): Promise<{ error: string | null; needsConfirm: boolean }> {
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signUp({
@@ -43,7 +44,12 @@ export async function signUpAction(input: {
         },
     });
     if (error) return { error: friendlyAuthError(error.message), needsConfirm: false };
-    // Kalau project Supabase mewajibkan konfirmasi email, session masih kosong di sini.
+    // Kalau project Supabase mewajibkan konfirmasi email, session masih kosong di sini
+    // -- kode referral baru bisa dipakai nanti setelah user beneran login (lewat
+    // halaman "Ajak Teman"), jadi di sini cuma dicoba kalau sesinya langsung aktif.
+    if (data.session && input.referralCode) {
+        await supabase.rpc("apply_referral_code", { p_code: input.referralCode.trim() });
+    }
     return { error: null, needsConfirm: !data.session };
 }
 

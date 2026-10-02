@@ -569,6 +569,8 @@ export type SettingsData = {
     usdIdrRate: number;
     stock: number;
     rscConfigured: boolean;
+    referralBonusPercent: number;
+    referralBonusCap: number;
 };
 
 // ============================================================
@@ -612,11 +614,23 @@ export async function getPaketData(): Promise<PaketData> {
 export async function getSettingsData(): Promise<SettingsData> {
     const { supabase, uid, ok } = await requireAdmin();
     if (!ok || !uid) {
-        return { isAdmin: false, adminEmail: "", usdIdrRate: 16300, stock: 0, rscConfigured: false };
+        return {
+            isAdmin: false,
+            adminEmail: "",
+            usdIdrRate: 16300,
+            stock: 0,
+            rscConfigured: false,
+            referralBonusPercent: 10,
+            referralBonusCap: 1500,
+        };
     }
     const [{ data: auth }, { data: settings }] = await Promise.all([
         supabase.auth.getUser(),
-        supabase.from("app_settings").select("stars_stock, usd_idr_rate").eq("id", true).maybeSingle(),
+        supabase
+            .from("app_settings")
+            .select("stars_stock, usd_idr_rate, referral_bonus_percent, referral_bonus_cap")
+            .eq("id", true)
+            .maybeSingle(),
     ]);
     return {
         isAdmin: true,
@@ -625,5 +639,35 @@ export async function getSettingsData(): Promise<SettingsData> {
         stock: Number(settings?.stars_stock ?? 0),
         // Cuma kirim status ada/tidaknya ke client, TIDAK PERNAH kirim isi key-nya.
         rscConfigured: !!process.env.RSC_API_KEY,
+        referralBonusPercent: Number(settings?.referral_bonus_percent ?? 10),
+        referralBonusCap: Number(settings?.referral_bonus_cap ?? 1500),
     };
+}
+
+export async function updateReferralBonusAction(
+    bonusPercent: number,
+    bonusCap: number,
+): Promise<{ error: string | null }> {
+    // >50% dikunci biar admin nggak kepencet set komisi gila-gilaan yang bikin
+    // program ini jadi rugi/gampang diakalin -- lihat pembahasan celah akun
+    // kembar di supabase/referrals.sql.
+    if (!Number.isFinite(bonusPercent) || bonusPercent < 0 || bonusPercent > 50) {
+        return { error: "Persentase tidak valid (maks 50%)." };
+    }
+    // Dikunci ke nominal fee flat termurah (e-wallet, Rp1.500) -- lebih dari
+    // itu, orang bisa top up pakai e-wallet/bank transfer (fee-nya flat, nggak
+    // ikut naik kayak QRIS) terus dapat untung bersih tiap siklus dari selisih
+    // komisi vs fee. Lihat pembahasan celah ini di supabase/referrals.sql.
+    if (!Number.isFinite(bonusCap) || bonusCap < 0 || bonusCap > 1500) {
+        return { error: "Nominal maksimal tidak valid (maks Rp1.500, biar nggak jadi celah akun kembar)." };
+    }
+    const supabase = await createClient();
+    const { error } = await supabase
+        .from("app_settings")
+        .update({ referral_bonus_percent: bonusPercent, referral_bonus_cap: bonusCap })
+        .eq("id", true);
+    if (error) return { error: "Gagal menyimpan. Pastikan akun ini admin." };
+    revalidatePath("/admin", "layout");
+    revalidatePath("/dashboard", "layout");
+    return { error: null };
 }

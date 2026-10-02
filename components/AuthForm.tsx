@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signInAction, signUpAction } from "@/lib/actions/auth";
 
 type Mode = "login" | "register";
-type Errors = Partial<Record<"name" | "username" | "email" | "password" | "confirm" | "terms", string>>;
+type Errors = Partial<Record<"name" | "username" | "referralCode" | "email" | "password" | "confirm" | "terms", string>>;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -24,6 +24,8 @@ export default function AuthForm({ mode, onSwitch }: { mode: Mode; onSwitch?: ()
         onSwitch();
     };
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const refFromLink = searchParams.get("ref") ?? "";
     const reg = mode === "register";
     const [showPw, setShowPw] = useState(false);
     const [pw, setPw] = useState("");
@@ -66,6 +68,7 @@ export default function AuthForm({ mode, onSwitch }: { mode: Mode; onSwitch?: ()
                     password,
                     name: v("name"),
                     username: v("username"),
+                    referralCode: v("referralCode"),
                 });
                 if (error) {
                     setAlert({ ok: false, text: error });
@@ -135,6 +138,14 @@ export default function AuthForm({ mode, onSwitch }: { mode: Mode; onSwitch?: ()
                         { type: "text", placeholder: "username", autoComplete: "username" },
                         "field-prefix",
                     )}
+                {reg &&
+                    field("referralCode", "Kode referral (opsional)", {
+                        type: "text",
+                        placeholder: "Kode dari temanmu",
+                        autoComplete: "off",
+                        defaultValue: refFromLink,
+                        style: { textTransform: "uppercase" },
+                    })}
                 {field("email", "Email", {
                     type: "email",
                     placeholder: "kamu@email.com",
