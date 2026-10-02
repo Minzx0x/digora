@@ -131,13 +131,27 @@ function TrendChart({ data }: { data: TrendPoint[] }) {
     );
 }
 
-function BreakdownBar({ label, count, right, pct, color }: { label: string; count: number; right: string; pct: number; color: string }) {
+function BreakdownBar({
+    label,
+    count,
+    right,
+    pct,
+    color,
+    unit = "pesanan",
+}: {
+    label: string;
+    count: number;
+    right: string;
+    pct: number;
+    color: string;
+    unit?: string;
+}) {
     return (
         <div className="stat-bar-row">
             <div className="stat-bar-top">
                 <b>{label}</b>
                 <span>
-                    {num(count)} pesanan · {right} ({pct}%)
+                    {num(count)} {unit} · {right}
                 </span>
             </div>
             <div className="stat-bar-track">
@@ -206,6 +220,10 @@ export default function AdminStatistik({ initial }: { initial: AdminStatsData })
                             <span>User baru daftar</span>
                             <strong>{num(data.totals.newUsers)}</strong>
                         </div>
+                        <div className="d-stat">
+                            <span>Kunjungan halaman</span>
+                            <strong>{num(data.totals.pageViews)}</strong>
+                        </div>
                     </div>
                 </section>
 
@@ -265,6 +283,26 @@ export default function AdminStatistik({ initial }: { initial: AdminStatsData })
                             ))
                         )}
                     </div>
+                </section>
+
+                <section className="d-card">
+                    <div className="d-card-head">
+                        <h2>Halaman paling sering dibuka</h2>
+                    </div>
+                    {data.topPages.length === 0 ? (
+                        <p className="d-note">Belum ada data kunjungan di rentang ini.</p>
+                    ) : (
+                        data.topPages.map((p) => (
+                            <BreakdownBar
+                                key={p.path}
+                                label={p.path}
+                                count={p.count}
+                                right={`${p.count} kunjungan`}
+                                pct={Math.round((p.count / data.topPages[0].count) * 100)}
+                                color="#2540ff"
+                            />
+                        ))
+                    )}
                 </section>
             </main>
         </div>

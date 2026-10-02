@@ -46,11 +46,11 @@ export default function AdminLoginForm() {
                     {alert && <div className="admin-login-alert">{alert}</div>}
                     <label>
                         Email
-                        <input name="email" type="email" placeholder="admin@digora.com" autoComplete="username" required />
+                        <input name="email" type="email" autoComplete="username" required />
                     </label>
                     <label>
                         Password
-                        <input name="password" type="password" placeholder="Password admin" autoComplete="current-password" required />
+                        <input name="password" type="password" autoComplete="current-password" required />
                     </label>
                     <button type="submit" disabled={loading}>
                         {loading ? "Memproses…" : "Masuk sebagai admin"}

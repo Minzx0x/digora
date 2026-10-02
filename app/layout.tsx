@@ -5,6 +5,7 @@ import "@fontsource/hanken-grotesk/700.css";
 import "@fontsource/hanken-grotesk/800.css";
 import "./globals.css";
 import "./sections.css";
+import PageViewTracker from "@/components/PageViewTracker";
 
 const TITLE = "Digora — Telegram Stars & SMM Panel Termurah";
 const DESCRIPTION =
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="id" suppressHydrationWarning>
       <body>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <PageViewTracker />
         {children}
       </body>
     </html>

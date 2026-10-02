@@ -9,13 +9,16 @@ export type TrendPoint = { label: string; deposit: number; revenue: number; orde
 export type StatusBreakdownRow = { status: AdminStatus; label: string; count: number; pct: number };
 export type KindBreakdownRow = { kind: string; label: string; count: number; revenue: number; pct: number };
 
+export type TopPageRow = { path: string; count: number };
+
 export type AdminStatsData = {
     isAdmin: boolean;
     range: StatsRange;
     trend: TrendPoint[];
-    totals: { deposit: number; revenue: number; orders: number; newUsers: number };
+    totals: { deposit: number; revenue: number; orders: number; newUsers: number; pageViews: number };
     statusBreakdown: StatusBreakdownRow[];
     kindBreakdown: KindBreakdownRow[];
+    topPages: TopPageRow[];
 };
 
 const STATUS_LABEL: Record<AdminStatus, string> = {
@@ -35,9 +38,10 @@ const EMPTY: AdminStatsData = {
     isAdmin: false,
     range: "7d",
     trend: [],
-    totals: { deposit: 0, revenue: 0, orders: 0, newUsers: 0 },
+    totals: { deposit: 0, revenue: 0, orders: 0, newUsers: 0, pageViews: 0 },
     statusBreakdown: [],
     kindBreakdown: [],
+    topPages: [],
 };
 
 // Supabase/PostgREST otomatis membatasi SETIAP select maksimal 1000 baris per
@@ -177,10 +181,11 @@ export async function getAdminStatsData(range: StatsRange): Promise<AdminStatsDa
     const startIso = start ? start.toISOString() : null;
     const endIso = end.toISOString();
 
-    const [ordersRaw, depositsRaw, profilesRaw] = await Promise.all([
+    const [ordersRaw, depositsRaw, profilesRaw, pageViewsRaw] = await Promise.all([
         fetchAllRows(supabase, "orders", "kind, total, status, created_at", endIso, startIso),
         fetchAllRows(supabase, "deposits", "amount, status, created_at", endIso, startIso),
         fetchAllRows(supabase, "profiles", "created_at", endIso, startIso),
+        fetchAllRows(supabase, "page_views", "path, created_at", endIso, startIso),
     ]);
 
     // Buat "Sepanjang Waktu", perlu tau data paling lama biar bucket bulanannya
@@ -276,11 +281,25 @@ export async function getAdminStatsData(range: StatsRange): Promise<AdminStatsDa
         }))
         .sort((a, b) => b.count - a.count);
 
+    // Analytics sendiri (page_views, lihat supabase/page-views.sql) -- cuma
+    // 10 path teratas biar ringkas, bukan daftar semua path yang pernah
+    // dibuka.
+    const pageCount = new Map<string, number>();
+    for (const p of pageViewsRaw) {
+        const path = p.path as string;
+        pageCount.set(path, (pageCount.get(path) ?? 0) + 1);
+    }
+    const topPages: TopPageRow[] = [...pageCount.entries()]
+        .map(([path, count]) => ({ path, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
     return {
         isAdmin: true,
         range,
         trend,
-        totals: { deposit: totalDeposit, revenue: totalRevenue, orders: totalOrders, newUsers: profilesRaw.length },
+        totals: { deposit: totalDeposit, revenue: totalRevenue, orders: totalOrders, newUsers: profilesRaw.length, pageViews: pageViewsRaw.length },
+        topPages,
         statusBreakdown,
         kindBreakdown,
     };
