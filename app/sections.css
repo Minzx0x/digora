@@ -749,6 +749,61 @@ section[id] {
     background: rgba(255, 255, 255, 0.14);
 }
 
+/* ---------- referral promo ---------- */
+.ref-art {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.ref-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 48px;
+    align-items: center;
+}
+
+.ref-card {
+    position: relative;
+    padding: 36px 28px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    text-align: center;
+}
+
+.ref-card-icon {
+    margin: 0 auto 16px;
+}
+
+.ref-card-label {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.ref-card-code {
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #ffffff;
+}
+
+.ref-card-note {
+    margin: 16px 0 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.55);
+}
+
 /* ---------- footer ---------- */
 .foot {
     overflow: hidden;
@@ -951,6 +1006,11 @@ section[id] {
         transform-origin: top right;
     }
 
+    .ref-grid {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
     .faq {
         grid-template-columns: 1fr;
         gap: 36px;
@@ -980,6 +1040,10 @@ section[id] {
     }
 
     .icon-badge.cta-top {
+        display: none;
+    }
+
+    .ref-art {
         display: none;
     }
 
